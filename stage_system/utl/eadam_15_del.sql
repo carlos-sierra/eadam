@@ -1,5 +1,9 @@
 -- deletes an eadam_seq_id
 
+ALTER SESSION FORCE PARALLEL QUERY PARALLEL 4;
+ALTER SESSION FORCE PARALLEL DML PARALLEL 4;
+ALTER SESSION FORCE PARALLEL DDL PARALLEL 4;
+
 -- list
 COL seq FOR 999;
 COL dbname_instance_host FOR A50;
@@ -31,9 +35,11 @@ BEGIN
              ORDER BY
                    table_name)
   LOOP
-    EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id.' INTO l_count;
-    EXECUTE IMMEDIATE 'DELETE '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id.';
+    EXECUTE IMMEDIATE 'SELECT /*+ PARALLEL(4) */ COUNT(*) FROM '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id.' INTO l_count;
+    EXECUTE IMMEDIATE 'DELETE /*+ PARALLEL(4) */ '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id.';
+    EXECUTE IMMEDIATE 'COMMIT';
     DBMS_OUTPUT.PUT_LINE(RPAD(i.table_name, 32, '.')||LPAD(l_count, 12)||' rows');
+    EXECUTE IMMEDIATE 'ALTER TABLE '||i.table_name||' MOVE';
   END LOOP;
 END;
 /

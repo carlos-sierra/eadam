@@ -328,7 +328,7 @@ BEGIN
   END IF;
   DBMS_LOB.createtemporary(l_other_xml, TRUE, DBMS_LOB.call);
   DBMS_LOB.append(l_other_xml, l_other_xml_2);
-  FOR i IN (SELECT other_xml
+  FOR i IN (SELECT /*+ PARALLEL(4) */ other_xml
               FROM dba_hist_sql_plan_s
              WHERE eadam_seq_id = p_eadam_seq_id
                AND row_num > l_row_num
@@ -361,7 +361,7 @@ RETURN CLOB IS
   l_other_xml CLOB;
   l_other_xml_2 CLOB;
 BEGIN
-  SELECT row_num, other_xml 
+  SELECT /*+ PARALLEL(4) */ row_num, other_xml 
     INTO l_row_num, l_other_xml_2 
     FROM gv_sql_plan_statistics_al_s
    WHERE eadam_seq_id = p_eadam_seq_id
@@ -376,7 +376,7 @@ BEGIN
   END IF;
   DBMS_LOB.createtemporary(l_other_xml, TRUE, DBMS_LOB.call);
   DBMS_LOB.append(l_other_xml, l_other_xml_2);
-  FOR i IN (SELECT other_xml
+  FOR i IN (SELECT /*+ PARALLEL(4) */ other_xml
               FROM gv_sql_plan_statistics_al_s
              WHERE eadam_seq_id = p_eadam_seq_id
                AND row_num > l_row_num
@@ -447,12 +447,12 @@ RETURN cpu_demand_type_table PIPELINED IS
 BEGIN
   FOR i IN (WITH /*+ eadam.cpu_demand_mem */
             my_instances AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */ *
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */ *
               FROM instances
              WHERE eadam_seq_id = p_eadam_seq_id
             ),
             samples AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    i.dbid,
                    i.db_name,
                    i.host_name,
@@ -482,7 +482,7 @@ BEGIN
                    h.sample_time
             ),
             max_cpu_demand AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    inst_id,
                    PERCENTILE_DISC(p_percentile) WITHIN GROUP (ORDER BY cpu_demand) cpu_demand
               FROM samples
@@ -490,7 +490,7 @@ BEGIN
                    inst_id            
             ),
             capped_samples AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.dbid,
                    s.db_name,
                    s.host_name,
@@ -508,7 +508,7 @@ BEGIN
              WHERE m.inst_id = s.inst_id
             ),
             peak_demand_per_min AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    inst_id,
                    begin_time,
                    MAX(cpu_demand) cpu_demand
@@ -518,7 +518,7 @@ BEGIN
                    begin_time 
             ),
             max_sample_per_min_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.inst_id,
                    s.begin_time,
                    MIN(s.sample_time) sample_time
@@ -532,7 +532,7 @@ BEGIN
                    s.begin_time 
             ),
             max_per_min_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.dbid,
                    s.db_name,
                    s.host_name,
@@ -630,12 +630,12 @@ RETURN cpu_demand_type_table PIPELINED IS
 BEGIN
   FOR i IN (WITH /* cpu_demand_awr */
             my_instances AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */ *
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */ *
               FROM instances
              WHERE eadam_seq_id = p_eadam_seq_id
             ),
             samples AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    h.snap_id,
                    h.dbid,
                    i.db_name,
@@ -678,7 +678,7 @@ BEGIN
                    s.end_interval_time
             ),
             max_cpu_demand AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    dbid,
                    instance_number,
                    PERCENTILE_DISC(p_percentile) WITHIN GROUP (ORDER BY cpu_demand) cpu_demand
@@ -688,7 +688,7 @@ BEGIN
                    instance_number            
             ),
             capped_samples AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.snap_id,
                    s.dbid,
                    s.db_name,
@@ -710,7 +710,7 @@ BEGIN
                AND m.instance_number = s.instance_number
             ),
             peak_demand_per_hour AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    MIN(snap_id) snap_id,
                    dbid,
                    instance_number,
@@ -723,7 +723,7 @@ BEGIN
                    begin_time 
             ),
             max_sample_per_hour_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.dbid,
                    s.instance_number,
                    s.begin_time,
@@ -740,7 +740,7 @@ BEGIN
                    s.begin_time 
             ),
             max_per_hour_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.snap_id,
                    s.dbid,
                    s.db_name,
@@ -849,12 +849,12 @@ RETURN cpu_demand_mm_type_table PIPELINED IS
 BEGIN
   FOR i IN (WITH /* cpu_demand_awr */
             my_instances AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */ *
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */ *
               FROM instances
              WHERE eadam_seq_id = p_eadam_seq_id
             ),
             samples AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    h.snap_id,
                    h.dbid,
                    i.db_name,
@@ -895,7 +895,7 @@ BEGIN
                    s.end_interval_time
             ),
             mm_demand_per_hour AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    dbid,
                    db_name,
                    host_name,
@@ -998,7 +998,7 @@ BEGIN
 
   FOR i IN (WITH /*+ eadam.cpu_consumption_awr */
             cpu_time AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    snap_id,
                    dbid,
                    instance_number,
@@ -1016,7 +1016,7 @@ BEGIN
                    instance_number
             ),
             cpu_time_extended AS (
-            SELECT /*+ MATERIALIZE NO_MERGE ORDERED */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE ORDERED */
                    h1.snap_id,
                    h1.dbid,
                    di.db_name,
@@ -1062,7 +1062,7 @@ BEGIN
                AND di.startup_time = s1.startup_time
             ),
             cpu_time_aas AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    snap_id,
                    dbid,
                    db_name,
@@ -1083,7 +1083,7 @@ BEGIN
               FROM cpu_time_extended
             ),
             max_cpu_consumption AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    dbid,
                    instance_number,
                    PERCENTILE_DISC(p_percentile) WITHIN GROUP (ORDER BY aas_consumed_cpu) aas_consumed_cpu
@@ -1093,7 +1093,7 @@ BEGIN
                    instance_number            
             ),
             capped_samples AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.snap_id,
                    s.dbid,
                    s.db_name,
@@ -1113,7 +1113,7 @@ BEGIN
                AND m.instance_number = s.instance_number
             ),
             peak_consumption_per_hour AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    dbid,
                    instance_number,
                    begin_time,
@@ -1125,7 +1125,7 @@ BEGIN
                    begin_time 
             ),
             max_sample_per_hour_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.dbid,
                    s.instance_number,
                    s.begin_time,
@@ -1142,7 +1142,7 @@ BEGIN
                    s.begin_time 
             ),
             max_per_hour_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.snap_id,
                    s.dbid,
                    s.db_name,
@@ -1255,12 +1255,12 @@ BEGIN
 
   FOR i IN (WITH /*+ eadam.memory_usage_awr */
             my_instances AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */ *
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */ *
               FROM instances
              WHERE eadam_seq_id = p_eadam_seq_id
             ),
             sga AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    snap_id,
                    dbid,
                    instance_number,
@@ -1275,7 +1275,7 @@ BEGIN
                    instance_number
             ),
             pga AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    snap_id,
                    dbid,
                    instance_number,
@@ -1287,7 +1287,7 @@ BEGIN
                AND name = 'maximum PGA allocated'
             ),
             mem AS (
-            SELECT /*+ MATERIALIZE NO_MERGE ORDERED */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE ORDERED */
                    snp.snap_id,
                    snp.dbid,
                    ins.db_name,
@@ -1316,7 +1316,7 @@ BEGIN
                AND ins.instance_number = snp.instance_number
             ),
             hourly_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    MIN(snap_id) snap_id,
                    dbid,
                    db_name,
@@ -1402,12 +1402,12 @@ BEGIN
 
   FOR i IN (WITH /*+ eadam.iops */
             my_instances AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */ *
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */ *
               FROM instances
              WHERE eadam_seq_id = p_eadam_seq_id
             ),
             sysstat_io AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    h.snap_id,
                    h.dbid,
                    i.db_name,
@@ -1436,7 +1436,7 @@ BEGIN
                    i.inst_id
             ),
             snaps AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    snap_id,
                    dbid,
                    instance_number,
@@ -1451,7 +1451,7 @@ BEGIN
                AND end_interval_time BETWEEN TRUNC(p_date_from) AND TRUNC(p_date_to) + 1
             ),
             rw_per_snap_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE ORDERED */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE ORDERED */
                    t1.snap_id,
                    t1.dbid,
                    t1.db_name,
@@ -1484,7 +1484,7 @@ BEGIN
                AND s1.elapsed_sec > 60 -- ignore snaps too close
             ),
             max_rw_iops AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    dbid,
                    instance_number,
                    PERCENTILE_DISC(p_percentile) WITHIN GROUP (ORDER BY rw_iops) rw_iops
@@ -1494,7 +1494,7 @@ BEGIN
                    instance_number            
             ),
             capped_samples AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.snap_id,
                    s.dbid,
                    s.db_name,
@@ -1515,7 +1515,7 @@ BEGIN
                AND m.instance_number = s.instance_number
             ),
             max_rw_per_hour_and_inst AS ( 
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    dbid,
                    instance_number,
                    begin_time,
@@ -1527,7 +1527,7 @@ BEGIN
                    begin_time
             ),
             snap_per_hour_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.dbid,
                    s.instance_number,
                    s.begin_time,
@@ -1544,7 +1544,7 @@ BEGIN
                    s.begin_time
             ),
             max_per_hour_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.snap_id,
                    s.dbid,
                    s.db_name,
@@ -1659,12 +1659,12 @@ BEGIN
 
   FOR i IN (WITH /*+ eadam.mbps */
             my_instances AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */ *
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */ *
               FROM instances
              WHERE eadam_seq_id = p_eadam_seq_id
             ),
             sysstat_io AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    h.snap_id,
                    h.dbid,
                    i.db_name,
@@ -1693,7 +1693,7 @@ BEGIN
                    i.inst_id
             ),
             snaps AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    snap_id,
                    dbid,
                    instance_number,
@@ -1708,7 +1708,7 @@ BEGIN
                AND end_interval_time BETWEEN TRUNC(p_date_from) AND TRUNC(p_date_to) + 1
             ),
             rw_per_snap_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE ORDERED */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE ORDERED */
                    t1.snap_id,
                    t1.dbid,
                    t1.db_name,
@@ -1741,7 +1741,7 @@ BEGIN
                AND s1.elapsed_sec > 60 -- ignore snaps too close
             ),
             max_rw_mbps AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    dbid,
                    instance_number,
                    PERCENTILE_DISC(p_percentile) WITHIN GROUP (ORDER BY rw_mbps) rw_mbps
@@ -1751,7 +1751,7 @@ BEGIN
                    instance_number            
             ),
             capped_samples AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.snap_id,
                    s.dbid,
                    s.db_name,
@@ -1772,7 +1772,7 @@ BEGIN
                AND m.instance_number = s.instance_number
             ),
             max_rw_per_hour_and_inst AS ( 
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    dbid,
                    instance_number,
                    begin_time,
@@ -1784,7 +1784,7 @@ BEGIN
                    begin_time
             ),
             snap_per_hour_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.dbid,
                    s.instance_number,
                    s.begin_time,
@@ -1801,7 +1801,7 @@ BEGIN
                    s.begin_time
             ),
             max_per_hour_and_inst AS (
-            SELECT /*+ MATERIALIZE NO_MERGE */
+            SELECT /*+ PARALLEL(4) MATERIALIZE NO_MERGE */
                    s.snap_id,
                    s.dbid,
                    s.db_name,

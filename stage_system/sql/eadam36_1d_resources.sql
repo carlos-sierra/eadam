@@ -3,17 +3,92 @@ SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
-DEF title = 'CPU Demand (MEM)';
-DEF main_table = 'GV_ACTIVE_SESSION_HISTORY_S';
-DEF abstract = 'Number of Sessions demanding CPU. Includes Peak (max), percentiles and average.'
-DEF foot = 'Consider Peak for sizing.'
-
 COL db_name FOR A9;
 COL host_name FOR A64;
 COL instance_name FOR A16;
 COL db_unique_name FOR A30;
 COL platform_name FOR A101;
 COL version FOR A17;
+
+DEF title = 'Resources Summary';
+DEF main_table = 'INSTANCES_V';
+DEF abstract = 'Consolidated view of Resources by individual Instances and total Database.'
+DEF abstract2 = '<br><br>Be aware that some columns are aggregated(sum) while others are combined values.<br>'
+DEF foot = 'For Provisioning and Sizing, consider Average Active Sessions (AAS) for CPU Demand, which is more accurate than AAS for CPU Consumed.'
+DEF foot2 = '<br>Aggregated(sum) means: Simple SUM of all relevant columns. For Combined values see other specific areas of this report.'
+
+BEGIN
+  :sql_text := '
+SELECT
+  TO_NUMBER(NULL) dbid               
+, NULL db_name            
+, NULL db_unique_name     
+, NULL platform_name      
+, NULL version            
+, host_name          
+, instance_number    
+, instance_name      
+-- database size 
+, TO_NUMBER(NULL) database_size_gb       
+-- cpu time (DEM)and AWR or MEM: taking 99% else 95% since samples frequency is every 1 or 10 seconds, so very spiky. 99% percentile removed 1% of spikes.
+, aas_cpu_demand    
+-- cpu time (CON)sumption AWR: taking max (peak) since this metric is already averaged per hour, so peaks are already smoothed out.
+, aas_cpu_consumed      
+-- memory size AWR or MEM
+, mem_size_gb        
+, sga_size_gb        
+, pga_size_gb        
+-- disk throughput
+, rw_iops 
+, r_iops            
+, w_iops            
+, rw_mbps        
+, r_mbps            
+, w_mbps            
+FROM instances_v
+WHERE eadam_seq_id = &&eadam_seq_id.
+UNION ALL
+SELECT
+  dbid               
+, db_name            
+, db_unique_name     
+, platform_name      
+, version            
+, NULL host_name          
+, TO_NUMBER(NULL) instance_number    
+, NULL instance_name      
+-- database size 
+, database_size_gb       
+-- cpu time (DEM)and AWR or MEM: taking 99% else 95% since samples frequency is every 1 or 10 seconds, so very spiky. 99% percentile removed 1% of spikes.
+, aas_cpu_demand    
+-- cpu time (CON)sumption AWR: taking max (peak) since this metric is already averaged per hour, so peaks are already smoothed out.
+, aas_cpu_consumed      
+-- memory size AWR or MEM
+, mem_size_gb        
+, sga_size_gb        
+, pga_size_gb        
+-- disk throughput
+, rw_iops 
+, r_iops            
+, w_iops            
+, rw_mbps        
+, r_mbps            
+, w_mbps            
+FROM databases_v
+WHERE eadam_seq_id = &&eadam_seq_id.
+ORDER BY instance_number NULLS LAST
+';
+END;
+/
+
+@@eadam36_9a_pre_one.sql
+
+/*****************************************************************************************/
+
+DEF title = 'CPU Demand (MEM)';
+DEF main_table = 'GV_ACTIVE_SESSION_HISTORY_S';
+DEF abstract = 'Number of Sessions demanding CPU. Includes Peak (max), percentiles and average.'
+DEF foot = 'Consider Peak for sizing.'
 
 COL aas_cpu_peak       FOR 999999999999990.0 HEA "CPU Demand Peak";
 COL aas_cpu_99_99_perc FOR 999999999999990.0 HEA "CPU Demand 99.99% Percentile";
@@ -74,6 +149,7 @@ SELECT
 , aas_cpu_50_perc   
 FROM cpu_time
 WHERE eadam_seq_id = &&eadam_seq_id.
+AND dbid = &&eadam_dbid.
 AND cpu_time_type = ''DEM''
 AND cpu_time_source = ''AWR''
 ORDER BY CASE aggregate_level WHEN ''I'' THEN 1 ELSE 2 END, instance_number
@@ -125,8 +201,9 @@ SELECT begin_time,
        0 dummy_15
   FROM cpu_demand_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND instance_number = @instance_number@
-   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD'') + 1
+   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD/HH24:MI'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD/HH24:MI'') + (1/24/60)
  ORDER BY
        begin_time,
        end_time
@@ -148,7 +225,7 @@ DEF vbaseline = 'baseline:&&avg_cpu_count.,';
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 1 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 1 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 1';
 DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -157,7 +234,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 2 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 2 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 2';
 DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -166,7 +243,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 3 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 3 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 3';
 DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -175,7 +252,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 4 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 4 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 4';
 DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -184,7 +261,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 5 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 5 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 5';
 DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -193,7 +270,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 6 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 6 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 6';
 DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -202,7 +279,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 7 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 7 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 7';
 DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -211,7 +288,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 8 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 8 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Peak) for Instance 8';
 DEF abstract = 'Number of Sessions demanding CPU. Based on peak demand per hour.'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -265,8 +342,9 @@ SELECT begin_time,
        0 dummy_15
   FROM cpu_demand_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND instance_number = @instance_number@
-   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD'') + 1
+   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD/HH24:MI'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD/HH24:MI'') + (1/24/60)
  ORDER BY
        begin_time,
        end_time
@@ -288,7 +366,7 @@ DEF vbaseline = 'baseline:&&avg_cpu_count.,';
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 1 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 1 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 1';
 DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -297,7 +375,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 2 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 2 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 2';
 DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -306,7 +384,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 3 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 3 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 3';
 DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -315,7 +393,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 4 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 4 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 4';
 DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -324,7 +402,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 5 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 5 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 5';
 DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -333,7 +411,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 6 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 6 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 6';
 DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -342,7 +420,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 7 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 7 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 7';
 DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -351,7 +429,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 8 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 8 AND ROWNUM = 1;
 DEF title = 'CPU Demand Series (Percentile) for Instance 8';
 DEF abstract = 'Number of Sessions demanding CPU. Based on percentiles per hour as per Active Session History (ASH).'
 DEF foot = 'Sessions "ON CPU" or waiting on "resmgr:cpu quantum"'
@@ -395,6 +473,7 @@ SELECT
 , aas_cpu_50_perc   
 FROM cpu_time
 WHERE eadam_seq_id = &&eadam_seq_id.
+AND dbid = &&eadam_dbid.
 AND cpu_time_type = ''CON''
 AND cpu_time_source = ''AWR''
 ORDER BY CASE aggregate_level WHEN ''I'' THEN 1 ELSE 2 END, instance_number
@@ -446,8 +525,9 @@ SELECT begin_time,
        0 dummy_15
   FROM cpu_consumption_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND instance_number = @instance_number@
-   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD'') + 1
+   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD/HH24:MI'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD/HH24:MI'') + (1/24/60)
  ORDER BY
        begin_time
 ';
@@ -468,7 +548,7 @@ DEF vbaseline = 'baseline:&&avg_cpu_count.,';
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 1 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 1 AND ROWNUM = 1;
 DEF title = 'CPU Consumption Series for Instance 1';
 DEF abstract = 'Average Active Sessions (AAS) consuming CPU.'
 DEF foot = 'DB CPU corresponds to Foreground processes'
@@ -477,7 +557,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 2 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 2 AND ROWNUM = 1;
 DEF title = 'CPU Consumption Series for Instance 2';
 DEF abstract = 'Average Active Sessions (AAS) consuming CPU.'
 DEF foot = 'DB CPU corresponds to Foreground processes'
@@ -486,7 +566,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 3 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 3 AND ROWNUM = 1;
 DEF title = 'CPU Consumption Series for Instance 3';
 DEF abstract = 'Average Active Sessions (AAS) consuming CPU.'
 DEF foot = 'DB CPU corresponds to Foreground processes'
@@ -495,7 +575,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 4 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 4 AND ROWNUM = 1;
 DEF title = 'CPU Consumption Series for Instance 4';
 DEF abstract = 'Average Active Sessions (AAS) consuming CPU.'
 DEF foot = 'DB CPU corresponds to Foreground processes'
@@ -504,7 +584,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 5 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 5 AND ROWNUM = 1;
 DEF title = 'CPU Consumption Series for Instance 5';
 DEF abstract = 'Average Active Sessions (AAS) consuming CPU.'
 DEF foot = 'DB CPU corresponds to Foreground processes'
@@ -513,7 +593,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 6 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 6 AND ROWNUM = 1;
 DEF title = 'CPU Consumption Series for Instance 6';
 DEF abstract = 'Average Active Sessions (AAS) consuming CPU.'
 DEF foot = 'DB CPU corresponds to Foreground processes'
@@ -522,7 +602,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 7 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 7 AND ROWNUM = 1;
 DEF title = 'CPU Consumption Series for Instance 7';
 DEF abstract = 'Average Active Sessions (AAS) consuming CPU.'
 DEF foot = 'DB CPU corresponds to Foreground processes'
@@ -531,7 +611,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 8 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 8 AND ROWNUM = 1;
 DEF title = 'CPU Consumption Series for Instance 8';
 DEF abstract = 'Average Active Sessions (AAS) consuming CPU.'
 DEF foot = 'DB CPU corresponds to Foreground processes'
@@ -616,6 +696,7 @@ SELECT
 , max_pga_alloc_gb        
 FROM memory_size
 WHERE eadam_seq_id = &&eadam_seq_id.
+AND dbid = &&eadam_dbid.
 AND memory_source = ''AWR''
 ORDER BY CASE aggregate_level WHEN ''I'' THEN 1 ELSE 2 END, instance_number
 ';
@@ -667,8 +748,9 @@ SELECT begin_time,
        0 dummy_15
   FROM memory_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND instance_number = @instance_number@
-   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD'') + 1
+   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD/HH24:MI'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD/HH24:MI'') + (1/24/60)
  ORDER BY
        begin_time
 ';
@@ -683,56 +765,56 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '-1');
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 1 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 1 AND ROWNUM = 1;
 DEF title = 'Memory Size Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 2 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 2 AND ROWNUM = 1;
 DEF title = 'Memory Size Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 3 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 3 AND ROWNUM = 1;
 DEF title = 'Memory Size Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 4 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 4 AND ROWNUM = 1;
 DEF title = 'Memory Size Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 5 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 5 AND ROWNUM = 1;
 DEF title = 'Memory Size Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 6 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 6 AND ROWNUM = 1;
 DEF title = 'Memory Size Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 7 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 7 AND ROWNUM = 1;
 DEF title = 'Memory Size Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 8 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 8 AND ROWNUM = 1;
 DEF title = 'Memory Size Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -756,6 +838,7 @@ SELECT
 , size_gb   
 FROM database_size
 WHERE eadam_seq_id = &&eadam_seq_id.
+  AND dbid = &&eadam_dbid.
 ORDER BY CASE file_type WHEN ''Total'' THEN 1 ELSE 0 END, size_bytes DESC
 ';
 END;
@@ -829,6 +912,7 @@ SELECT
 , w_mbps_perc_50    
 FROM iops_and_mbps
 WHERE eadam_seq_id = &&eadam_seq_id.
+AND dbid = &&eadam_dbid.
 ORDER BY CASE aggregate_level WHEN ''I'' THEN 1 ELSE 2 END, instance_number
 ';
 END;
@@ -879,8 +963,9 @@ SELECT begin_time,
        0 dummy_15
   FROM iops_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND instance_number = @instance_number@
-   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD'') + 1
+   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD/HH24:MI'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD/HH24:MI'') + (1/24/60)
  ORDER BY
        begin_time
 ';
@@ -897,7 +982,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '-1');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 1 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 1 AND ROWNUM = 1;
 DEF title = 'IOPS Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -905,7 +990,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 2 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 2 AND ROWNUM = 1;
 DEF title = 'IOPS Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -913,7 +998,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 3 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 3 AND ROWNUM = 1;
 DEF title = 'IOPS Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -921,7 +1006,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 4 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 4 AND ROWNUM = 1;
 DEF title = 'IOPS Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -929,7 +1014,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 5 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 5 AND ROWNUM = 1;
 DEF title = 'IOPS Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -937,7 +1022,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 6 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 6 AND ROWNUM = 1;
 DEF title = 'IOPS Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -945,7 +1030,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 7 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 7 AND ROWNUM = 1;
 DEF title = 'IOPS Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -953,7 +1038,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) I/O Operations per Second (IOPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 8 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 8 AND ROWNUM = 1;
 DEF title = 'IOPS Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -1002,8 +1087,9 @@ SELECT begin_time,
        0 dummy_15
   FROM mbps_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND instance_number = @instance_number@
-   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD'') + 1
+   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD/HH24:MI'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD/HH24:MI'') + (1/24/60)
  ORDER BY
        begin_time
 ';
@@ -1020,7 +1106,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '-1');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 1 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 1 AND ROWNUM = 1;
 DEF title = 'MBPS Series for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -1028,7 +1114,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 2 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 2 AND ROWNUM = 1;
 DEF title = 'MBPS Series for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -1036,7 +1122,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 3 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 3 AND ROWNUM = 1;
 DEF title = 'MBPS Series for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -1044,7 +1130,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 4 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 4 AND ROWNUM = 1;
 DEF title = 'MBPS Series for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -1052,7 +1138,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 5 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 5 AND ROWNUM = 1;
 DEF title = 'MBPS Series for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -1060,7 +1146,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 6 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 6 AND ROWNUM = 1;
 DEF title = 'MBPS Series for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -1068,7 +1154,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 7 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 7 AND ROWNUM = 1;
 DEF title = 'MBPS Series for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 @@&&skip_all.eadam36_9a_pre_one.sql
@@ -1076,7 +1162,7 @@ EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 DEF abstract = 'Read (R), Write (W) and Read-Write (RW) Mega Bytes per Second (MBPS).'
-SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.AND instance_number = 8 AND ROWNUM = 1;
+SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.AND instance_number = 8 AND ROWNUM = 1;
 DEF title = 'MBPS Series for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
 @@&&skip_all.eadam36_9a_pre_one.sql

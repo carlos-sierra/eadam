@@ -1,6 +1,11 @@
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
 SET TERM ON VER OFF FEED OFF ECHO OFF;
 CL COL;
-COL row_num FOR 9999999 HEA '#' PRI;
+COL row_number FOR 9999999 HEA '#' PRI;
+COL eadam_seq_id_src NOPRI;
+COL row_num NOPRI;
+COL eadam_seq_id_1 NOPRI;
+COL eadam_seq_id_2 NOPRI;
 
 -- list
 COL seq FOR 999;
@@ -17,48 +22,85 @@ SELECT eadam_seq_id seq,
 -- parameters
 PRO
 PRO Parameter 1: eAdam seq_id (required)
-COL eadam_seq_id NEW_V eadam_seq_id NOPRI;
-SELECT TO_CHAR(MIN(eadam_seq_id)) eadam_seq_id,
-       TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD') min_date,
-       TO_CHAR(MAX(end_interval_time), 'YYYY-MM-DD') max_date
-  FROM dba_hist_snapshot_s
- WHERE eadam_seq_id = &1.;
+UNDEF eadam_seq_id;
+COL eadam_seq_id NEW_V eadam_seq_id;
+COL min_date NEW_V min_date FOR A16;
+COL max_date NEW_V max_date FOR A16;
+DEF eadam_seq_id = '&1.';
 
-PRO Parameter 2: Begin date "YYYY-MM-DD": (opt)
-COL minimum_snap_id NEW_V minimum_snap_id NOPRI;
-COL begin_date NEW_V begin_date FOR A10 NOPRI;
-SELECT MIN(snap_id) minimum_snap_id,
-       MIN(TO_CHAR(begin_interval_time, 'YYYY-MM-DD')) begin_date
+-- get dbid
+COL eadam_dbid NEW_V eadam_dbid;
+SELECT TO_CHAR(dbid) eadam_dbid FROM dba_hist_xtr_control_s WHERE eadam_seq_id = &&eadam_seq_id.;
+
+SELECT NVL(TO_CHAR(MIN(eadam_seq_id)), '&&eadam_seq_id.') eadam_seq_id,
+       NVL(TO_CHAR(MIN(begin_interval_time), 'YYYY-MM-DD/HH24:MI'), TO_CHAR(SYSDATE, 'YYYY-MM-DD/HH24:MI')) min_date,
+       NVL(TO_CHAR(MAX(end_interval_time), 'YYYY-MM-DD/HH24:MI'), TO_CHAR(SYSDATE, 'YYYY-MM-DD/HH24:MI')) max_date
+  FROM dba_hist_snapshot_s
+ WHERE eadam_seq_id = TO_NUMBER(TRIM('&&eadam_seq_id.'))
+   AND dbid = &&eadam_dbid.;
+
+SELECT NVL(MAX(TO_CHAR(CAST(sample_time AS DATE), 'YYYY-MM-DD/HH24:MI')), '&&max_date.') max_date
+  FROM gv_active_session_history_s
+ WHERE eadam_seq_id = &&eadam_seq_id.
+   AND TO_CHAR(CAST(sample_time AS DATE), 'YYYY-MM-DD/HH24:MI') > '&&max_date.';
+
+SELECT NVL(MIN(TO_CHAR(CAST(sample_time AS DATE), 'YYYY-MM-DD/HH24:MI')), '&&min_date.') min_date
+  FROM gv_active_session_history_s
+ WHERE eadam_seq_id = &&eadam_seq_id.
+   AND TO_CHAR(CAST(sample_time AS DATE), 'YYYY-MM-DD/HH24:MI') < '&&min_date.';
+
+SELECT '&&min_date.' begin_date_default, '&&max_date.' end_date_default FROM DUAL;
+
+PRO
+PRO Parameter 2: Begin date "YYYY-MM-DD/HH24:MI": (opt)
+COL minimum_snap_id NEW_V minimum_snap_id;
+COL begin_date NEW_V begin_date FOR A16;
+
+SELECT NVL(MAX(TO_CHAR(begin_interval_time, 'YYYY-MM-DD/HH24:MI')), '&&min_date.') begin_date
   FROM dba_hist_snapshot_s
  WHERE eadam_seq_id = &&eadam_seq_id.
-   AND TO_CHAR(begin_interval_time, 'YYYY-MM-DD') >= NVL(TRIM('&2.'), TO_CHAR(begin_interval_time, 'YYYY-MM-DD'));
+   AND dbid = &&eadam_dbid.
+   AND TO_CHAR(begin_interval_time, 'YYYY-MM-DD/HH24:MI') <= NVL(TRIM('&2.'), '&&min_date.');
 
-PRO Parameter 3: End date "YYYY-MM-DD": (opt)
-COL maximum_snap_id NEW_V maximum_snap_id NOPRI;
-COL end_date NEW_V end_date FOR A10 NOPRI;
-SELECT MAX(snap_id) maximum_snap_id,
-       MAX(TO_CHAR(end_interval_time, 'YYYY-MM-DD')) end_date
+SELECT NVL(MIN(snap_id), -1) minimum_snap_id
   FROM dba_hist_snapshot_s
  WHERE eadam_seq_id = &&eadam_seq_id.
-   AND TO_CHAR(end_interval_time, 'YYYY-MM-DD') <= NVL(TRIM('&3.'), TO_CHAR(end_interval_time, 'YYYY-MM-DD'));
+   AND dbid = &&eadam_dbid.
+   AND TO_CHAR(begin_interval_time, 'YYYY-MM-DD/HH24:MI') >= NVL('&&begin_date.', '&&min_date.');
+
+PRO Parameter 3: End date "YYYY-MM-DD/HH24:MI": (opt)
+COL maximum_snap_id NEW_V maximum_snap_id;
+COL end_date NEW_V end_date FOR A16;
+
+SELECT NVL(MIN(TO_CHAR(end_interval_time, 'YYYY-MM-DD/HH24:MI')), '&&max_date.') end_date
+  FROM dba_hist_snapshot_s
+ WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
+   AND TO_CHAR(end_interval_time, 'YYYY-MM-DD/HH24:MI') >= NVL(TRIM('&3.'), '&&max_date.');
+
+SELECT NVL(MAX(snap_id), -1) maximum_snap_id
+  FROM dba_hist_snapshot_s
+ WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
+   AND TO_CHAR(end_interval_time, 'YYYY-MM-DD/HH24:MI') <= NVL('&&end_date.', '&&max_date.');
 
 DEF skip_script = 'sql/eadam36_0f_skip_script.sql ';
 
 /*
 PRO Parameter 4: Produce HTML Reports? [ Y | N ] (default Y)
-COL html_reports NEW_V html_reports NOPRI FOR A1;
+COL html_reports NEW_V html_reports FOR A1;
 SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&4.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') html_reports FROM DUAL;
 
 PRO Parameter 5: Produce TEXT Reports? [ Y | N ] (default Y)
-COL text_reports NEW_V text_reports NOPRI FOR A1;
+COL text_reports NEW_V text_reports FOR A1;
 SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&5.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') text_reports FROM DUAL;
 
 PRO Parameter 6: Produce CSV Files? [ Y | N ] (default Y)
-COL csv_files NEW_V csv_files NOPRI FOR A1;
+COL csv_files NEW_V csv_files FOR A1;
 SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&6.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') csv_files FROM DUAL;
 
 PRO Parameter 7: Produce CHART Reports? [ Y | N ] (default Y)
-COL chrt_reports NEW_V chrt_reports NOPRI FOR A1;
+COL chrt_reports NEW_V chrt_reports FOR A1;
 SELECT DECODE(NVL(UPPER(SUBSTR(TRIM('&7.'), 1, 1)), 'Y'), 'Y', NULL, '&&skip_script.') chrt_reports FROM DUAL;
 */
 
@@ -68,12 +110,8 @@ DEF text_reports = '';
 DEF csv_files = '';
 DEF chrt_reports = '';
 
--- get dbid
-COL dbid NEW_V dbid NOPRI;
-SELECT TO_CHAR(dbid) dbid FROM dba_hist_xtr_control_s WHERE eadam_seq_id = &&eadam_seq_id.;
-
 -- get database name (up to 10, stop before first '.', no special characters)
-COL database_name_short NEW_V database_name_short FOR A10 NOPRI;
+COL database_name_short NEW_V database_name_short FOR A10;
 SELECT LOWER(SUBSTR(dbname, 1, 10)) database_name_short FROM dba_hist_xtr_control_s WHERE eadam_seq_id = &&eadam_seq_id.;
 SELECT SUBSTR('&&database_name_short.', 1, INSTR('&&database_name_short..', '.') - 1) database_name_short FROM DUAL;
 SELECT TRANSLATE('&&database_name_short.',
@@ -81,7 +119,7 @@ SELECT TRANSLATE('&&database_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_') database_name_short FROM DUAL;
 
 -- get host name (up to 30, stop before first '.', no special characters)
-COL host_name_short NEW_V host_name_short FOR A30 NOPRI;
+COL host_name_short NEW_V host_name_short FOR A30;
 SELECT LOWER(SUBSTR(host_name, 1, 30)) host_name_short FROM dba_hist_xtr_control_s WHERE eadam_seq_id = &&eadam_seq_id.;
 SELECT SUBSTR('&&host_name_short.', 1, INSTR('&&host_name_short..', '.') - 1) host_name_short FROM DUAL;
 SELECT TRANSLATE('&&host_name_short.',
@@ -89,38 +127,45 @@ SELECT TRANSLATE('&&host_name_short.',
 'abcdefghijklmnopqrstuvwxyz0123456789-_') host_name_short FROM DUAL;
 
 -- get rdbms version
-COL db_version NEW_V db_version NOPRI;
+COL db_version NEW_V db_version;
 SELECT version db_version FROM dba_hist_xtr_control_s WHERE eadam_seq_id = &&eadam_seq_id.;
 DEF skip_10g = '';
-COL skip_10g NEW_V skip_10g NOPRI;
+COL skip_10g NEW_V skip_10g;
 SELECT version skip_10g FROM dba_hist_xtr_control_s WHERE eadam_seq_id = &&eadam_seq_id. AND version LIKE '10%';
 
+-- eadam extraction types: PT (Performance Evaluation) or SP (Sizing and Provisioning)
+DEF skip_pt = '';
+COL skip_pt NEW_V skip_pt;
+SELECT DECODE(COUNT(*), 0, '--') skip_pt FROM gv_sql_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1;
+
 -- get average number of CPUs
-COL avg_cpu_count NEW_V avg_cpu_count FOR A3 NOPRI;
-SELECT ROUND(AVG(TO_NUMBER(value))) avg_cpu_count FROM gv_system_parameter2_s WHERE eadam_seq_id = &&eadam_seq_id. AND name = 'cpu_count';
+COL avg_cpu_count NEW_V avg_cpu_count FOR A3;
+SELECT NVL(ROUND(AVG(TO_NUMBER(value))), 0) avg_cpu_count FROM gv_system_parameter2_s WHERE eadam_seq_id = &&eadam_seq_id. AND name = 'cpu_count';
 
 -- get total number of CPUs
-COL sum_cpu_count NEW_V sum_cpu_count FOR A3 NOPRI;
-SELECT SUM(TO_NUMBER(value)) sum_cpu_count FROM gv_system_parameter2_s WHERE eadam_seq_id = &&eadam_seq_id. AND name = 'cpu_count';
+COL sum_cpu_count NEW_V sum_cpu_count FOR A3;
+SELECT NVL(SUM(TO_NUMBER(value)), 0) sum_cpu_count FROM gv_system_parameter2_s WHERE eadam_seq_id = &&eadam_seq_id. AND name = 'cpu_count';
 
 -- determine if rac or single instance (null means rac)
-COL is_single_instance NEW_V is_single_instance FOR A1 NOPRI;
-SELECT CASE COUNT(DISTINCT instance_number) WHEN 1 THEN 'Y' END is_single_instance FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&dbid.;
+COL is_single_instance NEW_V is_single_instance FOR A1;
+SELECT CASE COUNT(DISTINCT instance_number) WHEN 1 THEN 'Y' END is_single_instance FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.;
 
 -- timestamp on filename
-COL file_creation_time NEW_V file_creation_time NOPRI FOR A20;
+COL file_creation_time NEW_V file_creation_time FOR A20;
 SELECT TO_CHAR(SYSDATE, 'YYYYMMDD_HH24MI') file_creation_time FROM DUAL;
 
 -- snapshot ranges
-COL history_days NEW_V history_days NOPRI;
-SELECT TO_DATE('&&end_date.', 'YYYY-MM-DD') - TO_DATE('&&begin_date.', 'YYYY-MM-DD') + 1 history_days FROM DUAL;
-COL tool_sysdate NEW_V tool_sysdate NOPRI;
+COL history_days NEW_V history_days;
+SELECT ROUND(TO_DATE('&&end_date.', 'YYYY-MM-DD/HH24:MI') - TO_DATE('&&begin_date.', 'YYYY-MM-DD/HH24:MI'), 1) history_days FROM DUAL;
+COL tool_sysdate NEW_V tool_sysdate;
 SELECT TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') tool_sysdate FROM DUAL;
-COL as_of_date NEW_V as_of_date NOPRI;
+COL as_of_date NEW_V as_of_date;
 SELECT ', as of '||TO_CHAR(SYSDATE, 'Dy Mon DD @HH12:MIAM') as_of_date FROM DUAL;
+COL between_dates NEW_V between_dates;
+SELECT ', between &&begin_date. and &&end_date.' between_dates FROM DUAL;
 
 -- setup
-DEF tool_vrsn = 'v1407 (2014-04-21)';
+DEF tool_vrsn = 'v1409 (2014-07-26)';
 DEF prefix = 'eadam36';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -141,7 +186,11 @@ DEF def_max_rows = '1e4';
 DEF max_rows = '1e4';
 DEF exclusion_list = "(''ANONYMOUS'',''APEX_030200'',''APEX_040000'',''APEX_SSO'',''APPQOSSYS'',''CTXSYS'',''DBSNMP'',''DIP'',''EXFSYS'',''FLOWS_FILES'',''MDSYS'',''OLAPSYS'',''ORACLE_OCM'',''ORDDATA'',''ORDPLUGINS'',''ORDSYS'',''OUTLN'',''OWBSYS'')";
 DEF exclusion_list2 = "(''SI_INFORMTN_SCHEMA'',''SQLTXADMIN'',''SQLTXPLAIN'',''SYS'',''SYSMAN'',''SYSTEM'',''TRCANLZR'',''WMSYS'',''XDB'',''XS$NULL'')";
+DEF license_pack = 'T';
+DEF diagnostics_pack = 'Y';
+DEF tuning_pack = 'Y';
 DEF skip_diagnostics = '';
+DEF skip_tuning = '';
 DEF skip_html = '';
 DEF skip_text = '';
 DEF skip_csv = '';
@@ -200,7 +249,7 @@ DEF event_name_12 = '';
 DEF exadata = '';
 DEF max_col_number = '1';
 DEF column_number = '1';
-COL recovery NEW_V recovery NOPRI;
+COL recovery NEW_V recovery;
 SELECT CHR(38)||' recovery' recovery FROM DUAL;
 -- this above is to handle event "RMAN backup & recovery I/O"
 COL skip_html NEW_V skip_html;
@@ -224,12 +273,12 @@ COL dummy_12 NOPRI;
 COL dummy_13 NOPRI;
 COL dummy_14 NOPRI;
 COL dummy_15 NOPRI;
-COL time_stamp NEW_V time_stamp NOPRI FOR A20;
+COL time_stamp NEW_V time_stamp FOR A20;
 SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD/HH24:MI:SS') time_stamp FROM DUAL;
-COL hh_mm_ss NEW_V hh_mm_ss NOPRI FOR A8;
-COL title_no_spaces NEW_V title_no_spaces NOPRI;
-COL spool_filename NEW_V spool_filename NOPRI;
-COL one_spool_filename NEW_V one_spool_filename NOPRI;
+COL hh_mm_ss NEW_V hh_mm_ss FOR A8;
+COL title_no_spaces NEW_V title_no_spaces;
+COL spool_filename NEW_V spool_filename;
+COL one_spool_filename NEW_V one_spool_filename;
 VAR row_count NUMBER;
 VAR sql_text CLOB;
 VAR sql_text_backup CLOB;
@@ -255,6 +304,8 @@ ALTER SESSION SET MAX_DUMP_FILE_SIZE = '1G';
 ALTER SESSION SET TRACEFILE_IDENTIFIER = "&&eadam36_tracefile_identifier.";
 --ALTER SESSION SET STATISTICS_LEVEL = 'ALL';
 ALTER SESSION SET EVENTS '10046 TRACE NAME CONTEXT FOREVER, LEVEL &&sql_trace_level.';
+--PARALLEL
+ALTER SESSION FORCE PARALLEL QUERY PARALLEL 4;
 SET TERM OFF HEA ON LIN 32767 NEWP NONE PAGES 50 LONG 32000 LONGC 2000 WRA ON TRIMS ON TRIM ON TI OFF TIMI OFF ARRAY 100 NUM 20 SQLBL ON BLO . RECSEP OFF;
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -274,9 +325,9 @@ PRO <body>
 PRO <h1><a href="http://www.enkitec.com" target="_blank">Enkitec</a>: Awr DAta Mining tool <em>(<a href="http://www.enkitec.com/products/eadam" target="_blank">eadam</a>)</em></h1>
 PRO
 PRO <pre>
-PRO dbname : &&database_name_short. (&&db_version.)
-PRO host   : &&host_name_short.
-PRO seq_id : &&eadam_seq_id.
+PRO dbname:&&database_name_short. version:&&db_version. host:&&host_name_short. seq_id:&&eadam_seq_id. begin:&&begin_date. end:&&end_date.
+
 PRO </pre>
 PRO
 SPO OFF;
+WHENEVER SQLERROR CONTINUE;

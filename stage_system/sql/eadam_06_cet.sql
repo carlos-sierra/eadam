@@ -1,10 +1,10 @@
+SPO eadam_06_cet.txt;
+
 PRO This script loads awr data from source into staging system
-PRO 1) place tar into eadam/stage_system directory (the onew that contains the readme.txt)
-PRO 2) navigate to eadam/stage_system directory, which contains now tar file
+PRO 1) place tar into eadam/stage_system directory (the one that contains the readme.txt)
+PRO 2) navigate to eadam/stage_system directory, which contains now tar file(s)
 PRO 3) as SYS, run @eadam_load.sql to create external tables, load staging tables and produce output
 PRO
-
-SPO eadam_06_cet.txt;
 
 CONN / AS SYSDBA;
 
@@ -46,6 +46,9 @@ HOS ls -lt eadam*.tar
 PRO Parameter 4:
 PRO TAR_FILE_NAME:
 DEF tar_file_name = '&4';
+SPO OFF;
+SPO eadam_06_cet_&&tar_file_name..txt;
+DEF
 PRO
 SET ECHO ON FEED ON;
 
@@ -63,36 +66,31 @@ PRO gunzing files
 
 HOS gunzip -v dba_hist_xtr_control.txt.gz
 HOS gunzip -v dba_tab_columns.txt.gz
-HOS gunzip -v v_datafile.txt.gz
-HOS gunzip -v v_tempfile.txt.gz
-HOS gunzip -v v_controlfile.txt.gz
-HOS gunzip -v gv_log.txt.gz
+
+HOS gunzip -v dba_hist_active_sess_history.txt.gz
+HOS gunzip -v dba_hist_database_instance.txt.gz
+HOS gunzip -v dba_hist_event_histogram.txt.gz
+HOS gunzip -v dba_hist_osstat.txt.gz
+HOS gunzip -v dba_hist_parameter.txt.gz
+HOS gunzip -v dba_hist_pgastat.txt.gz
+HOS gunzip -v dba_hist_sga.txt.gz
+HOS gunzip -v dba_hist_sgastat.txt.gz
+HOS gunzip -v dba_hist_snapshot.txt.gz
+HOS gunzip -v dba_hist_sql_plan.txt.gz
+HOS gunzip -v dba_hist_sqlstat.txt.gz
+HOS gunzip -v dba_hist_sqltext.txt.gz
+HOS gunzip -v dba_hist_sys_time_model.txt.gz
+HOS gunzip -v dba_hist_sysstat.txt.gz
 HOS gunzip -v gv_active_session_history.txt.gz
-HOS gunzip -v gv_system_parameter2.txt.gz
-HOS gunzip -v gv_sql.txt.gz
+HOS gunzip -v gv_log.txt.gz
 HOS gunzip -v gv_sql_monitor.txt.gz
 HOS gunzip -v gv_sql_plan_monitor.txt.gz
 HOS gunzip -v gv_sql_plan_statistics_all.txt.gz
-HOS gunzip -v dba_hist_snapshot.txt.gz
-HOS gunzip -v dba_hist_osstat.txt.gz
-HOS gunzip -v dba_hist_sys_time_model.txt.gz
-HOS gunzip -v dba_hist_pgastat.txt.gz
-HOS gunzip -v dba_hist_sysstat.txt.gz
-HOS gunzip -v dba_hist_system_event.txt.gz
-HOS gunzip -v dba_hist_sqlstat.txt.gz
-HOS gunzip -v dba_hist_service_stat.txt.gz
-HOS gunzip -v dba_hist_sga.txt.gz
-HOS gunzip -v audit_actions.txt.gz
-HOS gunzip -v dba_hist_event_histogram.txt.gz
-HOS gunzip -v dba_hist_database_instance.txt.gz
-HOS gunzip -v dba_hist_iostat_detail.txt.gz
-HOS gunzip -v dba_hist_iostat_filetype.txt.gz
-HOS gunzip -v dba_hist_iostat_function.txt.gz
-HOS gunzip -v dba_hist_sgastat.txt.gz
-HOS gunzip -v dba_hist_active_sess_history.txt.gz
-HOS gunzip -v dba_hist_sqltext.txt.gz
-HOS gunzip -v dba_hist_sql_plan.txt.gz
-HOS gunzip -v dba_hist_parameter.txt.gz
+HOS gunzip -v gv_sql.txt.gz
+HOS gunzip -v gv_system_parameter2.txt.gz
+HOS gunzip -v v_controlfile.txt.gz
+HOS gunzip -v v_datafile.txt.gz
+HOS gunzip -v v_tempfile.txt.gz
 
 /* ------------------------------------------------------------------------- */
 
@@ -100,6 +98,7 @@ DEF fields_delimiter = '<,>';
 
 PRO Connecting as &&eadam_user.
 CONN &&eadam_user./&&eadam_pwd.;
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
 
 /* ------------------------------------------------------------------------- */
 
@@ -164,7 +163,7 @@ DECLARE
   l_error VARCHAR2(4000);
   l_table_name VARCHAR2(30);
 BEGIN
-  FOR i IN (SELECT DISTINCT table_name FROM dba_tab_columns_e)
+  FOR i IN (SELECT DISTINCT table_name FROM dba_tab_columns_e ORDER BY table_name)
   LOOP
     l_table_name := REPLACE(i.table_name, '$');
     l_cols := NULL;
@@ -180,6 +179,7 @@ BEGIN
         l_error := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(l_error||'. Trying to drop External Table: '||TRIM(LOWER(l_table_name))); -- expected to error first time
         INSERT INTO sql_error VALUES (-1, SYSDATE, TRIM(LOWER(l_table_name))||': '||l_error, l_sql);
+        COMMIT;
     END;
     l_sql := 'CREATE TABLE '||TRIM(LOWER(SUBSTR(l_table_name, 1, 25)))||'_e'||l_cols||'
   ORGANIZATION EXTERNAL
@@ -193,7 +193,9 @@ BEGIN
   MISSING FIELD VALUES ARE NULL
   REJECT ROWS WITH ALL NULL FIELDS
 ) LOCATION ('''||TRIM(LOWER(l_table_name))||'.txt'')
-)';   
+)
+  PARALLEL 4
+  REJECT LIMIT UNLIMITED';   
     INSERT INTO sql_log VALUES (l_sql);
     BEGIN
       EXECUTE IMMEDIATE l_sql;
@@ -202,11 +204,13 @@ BEGIN
         l_error := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(l_error||'. Trying to create External Table: '||TRIM(LOWER(l_table_name))); -- expecting some errors
         INSERT INTO sql_error VALUES (-1, SYSDATE, TRIM(LOWER(l_table_name))||': '||l_error, l_sql);
+        COMMIT;
     END;
     DBMS_STATS.LOCK_TABLE_STATS(USER, TRIM(LOWER(SUBSTR(l_table_name, 1, 25)))||'_e');
   END LOOP;
 END;
 /
+WHENEVER SQLERROR CONTINUE;
 
 /* ------------------------------------------------------------------------- */
 

@@ -106,16 +106,20 @@ SELECT
 , host_name_src      
 -- database size 
 , CEIL(db_total_size_gb) database_size_gb       
--- cpu time (DEM)and AWR or MEM
-, NVL(aas_cpu_99_perc_dem_awr, aas_cpu_99_perc_dem_mem) aas_cpu_demand    
--- cpu time (CON)sumption AWR
-, aas_cpu_peak_con_awr aas_cpu_consumed      
+-- cpu time (DEM)and AWR or MEM: taking 99% else 95% since samples frequency is every 1 or 10 seconds, so very spiky. 99% percentile removed 1% of spikes.
+, COALESCE(aas_cpu_99_perc_dem_awr, aas_cpu_99_perc_dem_mem, aas_cpu_95_perc_dem_awr, aas_cpu_95_perc_dem_mem, aas_cpu_peak_dem_awr, aas_cpu_peak_dem_mem) aas_cpu_demand    
+-- cpu time (CON)sumption AWR: taking max (peak) since this metric is already averaged per hour, so peaks are already smoothed out.
+, COALESCE(aas_cpu_peak_con_awr, aas_cpu_99_99_perc_con_awr, aas_cpu_99_9_perc_con_awr, aas_cpu_99_perc_con_awr, aas_cpu_95_perc_con_awr) aas_cpu_consumed      
 -- memory size AWR or MEM
-, ROUND(NVL(max_sga_alloc_gb_awr, max_sga_alloc_gb_mem), 1) sga_size_gb        
-, ROUND(NVL(max_pga_alloc_gb_awr, max_pga_alloc_gb_mem), 1) pga_size_gb        
+, ROUND(COALESCE(max_sga_alloc_gb_awr, max_sga_alloc_gb_mem, sga_max_size_gb_awr, sga_max_size_gb_mem, sga_target_awr, sga_target_mem), 1)         
++ ROUND(COALESCE(max_pga_alloc_gb_awr, max_pga_alloc_gb_mem, pga_aggregate_target_gb_awr, pga_aggregate_target_gb_mem), 1) mem_size_gb        
+, ROUND(COALESCE(max_sga_alloc_gb_awr, max_sga_alloc_gb_mem, sga_max_size_gb_awr, sga_max_size_gb_mem, sga_target_awr, sga_target_mem), 1) sga_size_gb        
+, ROUND(COALESCE(max_pga_alloc_gb_awr, max_pga_alloc_gb_mem, pga_aggregate_target_gb_awr, pga_aggregate_target_gb_mem), 1) pga_size_gb        
 -- disk throughput
+, (r_iops_peak + w_iops_peak) rw_iops 
 , r_iops_peak r_iops            
 , w_iops_peak w_iops            
+, (r_mbps_peak + w_mbps_peak) rw_mbps        
 , r_mbps_peak r_mbps            
 , w_mbps_peak w_mbps            
 FROM databases
@@ -123,6 +127,7 @@ FROM databases
 
 GRANT SELECT ON databases_v TO PUBLIC
 /
+
 CREATE OR REPLACE PUBLIC SYNONYM eadam_databases FOR databases_v
 /
 
@@ -134,16 +139,20 @@ SELECT
 , host_name          
 , instance_number    
 , instance_name      
--- cpu time (DEM)and AWR or MEM
-, NVL(aas_cpu_99_perc_dem_awr, aas_cpu_99_perc_dem_mem) aas_cpu_demand    
--- cpu time (CON)sumption AWR
-, aas_cpu_peak_con_awr aas_cpu_consumed      
+-- cpu time (DEM)and AWR or MEM: taking 99% else 95% since samples frequency is every 1 or 10 seconds, so very spiky. 99% percentile removed 1% of spikes.
+, COALESCE(aas_cpu_99_perc_dem_awr, aas_cpu_99_perc_dem_mem, aas_cpu_95_perc_dem_awr, aas_cpu_95_perc_dem_mem, aas_cpu_peak_dem_awr, aas_cpu_peak_dem_mem) aas_cpu_demand    
+-- cpu time (CON)sumption AWR: taking max (peak) since this metric is already averaged per hour, so peaks are already smoothed out.
+, COALESCE(aas_cpu_peak_con_awr, aas_cpu_99_99_perc_con_awr, aas_cpu_99_9_perc_con_awr, aas_cpu_99_perc_con_awr, aas_cpu_95_perc_con_awr) aas_cpu_consumed      
 -- memory size AWR or MEM
-, ROUND(NVL(max_sga_alloc_gb_awr, max_sga_alloc_gb_mem), 1) sga_size_gb        
-, ROUND(NVL(max_pga_alloc_gb_awr, max_pga_alloc_gb_mem), 1) pga_size_gb        
+, ROUND(COALESCE(max_sga_alloc_gb_awr, max_sga_alloc_gb_mem, sga_max_size_gb_awr, sga_max_size_gb_mem, sga_target_awr, sga_target_mem), 1)         
++ ROUND(COALESCE(max_pga_alloc_gb_awr, max_pga_alloc_gb_mem, pga_aggregate_target_gb_awr, pga_aggregate_target_gb_mem), 1) mem_size_gb        
+, ROUND(COALESCE(max_sga_alloc_gb_awr, max_sga_alloc_gb_mem, sga_max_size_gb_awr, sga_max_size_gb_mem, sga_target_awr, sga_target_mem), 1) sga_size_gb        
+, ROUND(COALESCE(max_pga_alloc_gb_awr, max_pga_alloc_gb_mem, pga_aggregate_target_gb_awr, pga_aggregate_target_gb_mem), 1) pga_size_gb        
 -- disk throughput
+, (r_iops_peak + w_iops_peak) rw_iops 
 , r_iops_peak r_iops            
 , w_iops_peak w_iops            
+, (r_mbps_peak + w_mbps_peak) rw_mbps        
 , r_mbps_peak r_mbps            
 , w_mbps_peak w_mbps            
 FROM instances
@@ -151,6 +160,7 @@ FROM instances
 
 GRANT SELECT ON instances_v TO PUBLIC
 /
+
 CREATE OR REPLACE PUBLIC SYNONYM eadam_instances FOR instances_v
 /
 

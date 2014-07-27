@@ -1,6 +1,13 @@
--- Loads Staging Objects
+SPO eadam_07_lso.txt
 
-SPO eadam_07_lso.txt;
+-- Loads Staging Objects
+COL eadam_seq_id NEW_V eadam_seq_id FOR A5;
+SELECT TRIM(TO_CHAR(eadam_seq.NEXTVAL)) eadam_seq_id FROM DUAL;
+PRO eadam_seq_id: "&&eadam_seq_id."
+
+SPO eadam_07_lso_&&eadam_seq_id..txt;
+PRO eadam_seq_id: "&&eadam_seq_id."
+
 SET ECHO ON FEED ON;
 
 DEF date_mask = 'YYYY-MM-DD/HH24:MI:SS';
@@ -10,14 +17,16 @@ ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_DATE_FORMAT = '&&date_mask.';
 ALTER SESSION SET NLS_TIMESTAMP_FORMAT = '&&timestamp_mask.';
 
-COL eadam_seq_id NEW_V eadam_seq_id;
-SELECT eadam_seq.NEXTVAL eadam_seq_id FROM DUAL;
+ALTER SESSION FORCE PARALLEL QUERY PARALLEL 4;
+ALTER SESSION FORCE PARALLEL DML PARALLEL 4;
+
 VAR eadam_seq_id NUMBER;
 EXEC :eadam_seq_id := TO_NUMBER('&&eadam_seq_id.');
 
 DELETE sql_log;
 PRO loading staging objects
 SET SERVEROUT ON;
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
 DECLARE
   l_cols_s VARCHAR2(32767);
   l_cols_e VARCHAR2(32767);
@@ -48,10 +57,12 @@ BEGIN
       l_cols_e := l_cols_e||', TRIM('||TRIM(j.column_name)||')'||CHR(10);
     END LOOP;
     l_cols_s := l_cols_s||')'||CHR(10);
-    l_sql := 'INSERT INTO '||LOWER(i.s_table_name)||CHR(10)||l_cols_s||'SELECT '||CHR(10)||l_cols_e||'FROM '||LOWER(i.e_table_name);
+    l_sql := 'INSERT /*+ APPEND PARALLEL(4) */ INTO '||LOWER(i.s_table_name)||CHR(10)||l_cols_s||
+             'SELECT /*+ PARALLEL(4) */ '||CHR(10)||l_cols_e||'FROM '||LOWER(i.e_table_name);
     INSERT INTO sql_log VALUES (l_sql);
     BEGIN
       EXECUTE IMMEDIATE l_sql USING IN :eadam_seq_id;
+      EXECUTE IMMEDIATE 'COMMIT';
     EXCEPTION
       WHEN OTHERS THEN
         l_error := SQLERRM;
@@ -62,6 +73,7 @@ BEGIN
   END LOOP;
 END;
 /
+WHENEVER SQLERROR CONTINUE;
 
 UPDATE dba_hist_xtr_control_s SET
   tar_file_name  = TRIM('&&tar_file_name.'),
@@ -87,6 +99,6 @@ SELECT eadam_seq_id seq,
 
 /* ------------------------------------------------------------------------- */
 
-HOS rm -f v_*.log v_*.txt gv_*.log gv_*.txt dba_hist_*.log dba_hist_*.txt audit_actions.log audit_actions.txt dba_tab_columns.log dba_tab_columns.txt
+HOS rm -f v_*.log v_*.txt gv_*.log gv_*.txt dba_hist_*.log dba_hist_*.txt dba_tab_columns.log dba_tab_columns.txt
 SET ECHO OFF FEED OFF;
 SPO OFF;

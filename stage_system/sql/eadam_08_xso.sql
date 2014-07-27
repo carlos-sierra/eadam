@@ -1,7 +1,19 @@
--- Transforms Staginging Objects
+SPO eadam_08_xso.txt
+CL COL
+SET LIN 2000 TRIMS ON TIM ON TIMI ON ECHO ON VER ON FEED ON;
 
-SPO eadam_08_xso.txt;
-SET ECHO ON FEED ON;
+-- Transforms Staginging Objects
+PRO eadam_seq_id: "&&eadam_seq_id."
+
+SPO eadam_08_xso_&&eadam_seq_id..txt;
+WHENEVER SQLERROR EXIT SQL.SQLCODE;
+
+ALTER SESSION ENABLE PARALLEL QUERY;
+ALTER SESSION ENABLE PARALLEL DML;
+
+COL eadam_dbid NEW_V eadam_dbid;
+SELECT dbid eadam_dbid FROM dba_hist_xtr_control_s WHERE eadam_seq_id = &&eadam_seq_id.
+/
 
 /* ------------------------------------------------------------------------- */
 
@@ -10,6 +22,8 @@ DEF percentile = '1';
 
 DELETE instances WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+COMMIT;
 
 INSERT INTO instances
 ( eadam_seq_id   
@@ -36,7 +50,7 @@ SELECT DISTINCT
    AND c.dbid = i.dbid
 ),
 i2 AS (
-SELECT DISTINCT
+SELECT /*+ PARALLEL(4) */ DISTINCT
        TO_NUMBER(value) instance_number,
        inst_id
   FROM gv_system_parameter2_s
@@ -55,13 +69,19 @@ SELECT
  WHERE i2.instance_number(+) = i1.instance_number 
 /
 
-SELECT COUNT(*) FROM instances WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT * FROM instances WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE databases WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+COMMIT;
 
 INSERT INTO databases
 ( eadam_seq_id       
@@ -96,13 +116,19 @@ SELECT
   FROM ctrl c
 /
 
-SELECT COUNT(*) FROM databases WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT * FROM databases WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'DEM' AND cpu_time_source = 'MEM'
 /
+
+COMMIT;
 
 INSERT INTO cpu_time
 ( eadam_seq_id      
@@ -196,13 +222,19 @@ SELECT /*+ ORDERED */
  WHERE perc_99_99.cpu_demand > 0
 /
 
-SELECT COUNT(*) FROM cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'DEM' AND cpu_time_source = 'MEM'
+COMMIT;
+
+SELECT * FROM cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'DEM' AND cpu_time_source = 'MEM'
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'DEM' AND cpu_time_source = 'AWR'
 /
+
+COMMIT;
 
 INSERT INTO cpu_time
 ( eadam_seq_id      
@@ -296,15 +328,21 @@ SELECT /*+ ORDERED */
  WHERE perc_99_99.cpu_demand > 0
 /
 
-SELECT COUNT(*) FROM cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'DEM' AND cpu_time_source = 'AWR'
+COMMIT;
+
+SELECT * FROM cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'DEM' AND cpu_time_source = 'AWR'
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
-DELETE cpu_demand_series WHERE eadam_seq_id = &&eadam_seq_id.
+DELETE /*+ PARALLEL(4) */ cpu_demand_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
 
-INSERT INTO cpu_demand_series 
+COMMIT;
+
+INSERT /*+ APPEND PARALLEL(4) */ INTO cpu_demand_series 
 ( eadam_seq_id        
 , aggregate_level
 , dbid                
@@ -375,6 +413,7 @@ SELECT
   FROM instances i, 
        TABLE(eadam.cpu_demand_awr(&&eadam_seq_id., i.instance_number, &&percentile.)) s
  WHERE i.eadam_seq_id = &&eadam_seq_id.
+   AND s.dbid = &&eadam_dbid.
 ) s,
 (
 SELECT /*+ &&sq_fact_hints. */
@@ -447,6 +486,7 @@ SELECT
 , s.on_cpu              
 , s.waiting_for_cpu     
   FROM TABLE(eadam.cpu_demand_awr(&&eadam_seq_id., NULL, &&percentile.)) s
+ WHERE s.dbid = &&eadam_dbid.
 ) s,
 (
 SELECT /*+ &&sq_fact_hints. */
@@ -474,13 +514,19 @@ SELECT /*+ &&sq_fact_hints. */
  WHERE x.begin_time = s.begin_time
 /
 
-SELECT COUNT(*) FROM cpu_demand_series WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT /*+ PARALLEL(4) */ COUNT(*) FROM cpu_demand_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'CON' AND cpu_time_source = 'AWR'
 /
+
+COMMIT;
 
 INSERT INTO cpu_time
 ( eadam_seq_id      
@@ -574,15 +620,21 @@ SELECT /*+ ORDERED */
  WHERE perc_99_99.consumed_cpu > 0
 /
 
-SELECT COUNT(*) FROM cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'CON' AND cpu_time_source = 'AWR'
+COMMIT;
+
+SELECT * FROM cpu_time WHERE eadam_seq_id = &&eadam_seq_id. AND cpu_time_type = 'CON' AND cpu_time_source = 'AWR'
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
-DELETE cpu_consumption_series WHERE eadam_seq_id = &&eadam_seq_id.
+DELETE /*+ PARALLEL(4) */ cpu_consumption_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
 
-INSERT INTO cpu_consumption_series 
+COMMIT;
+
+INSERT /*+ APPEND PARALLEL(4) */ INTO cpu_consumption_series 
 ( eadam_seq_id        
 , aggregate_level
 , dbid                
@@ -630,6 +682,7 @@ SELECT
 , s.background_cpu  
 , s.db_cpu           
   FROM my_instances i, TABLE(eadam.cpu_consumption_awr(&&eadam_seq_id., i.instance_number, &&percentile.)) s
+ WHERE s.dbid = &&eadam_dbid.
  UNION ALL
 SELECT 
   d.eadam_seq_id
@@ -648,15 +701,22 @@ SELECT
 , s.background_cpu  
 , s.db_cpu           
   FROM my_databases d, TABLE(eadam.cpu_consumption_awr(&&eadam_seq_id., NULL, &&percentile.)) s
+ WHERE s.dbid = &&eadam_dbid.
 /
 
-SELECT COUNT(*) FROM cpu_consumption_series WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT /*+ PARALLEL(4) */ COUNT(*) FROM cpu_consumption_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE memory_size WHERE eadam_seq_id = &&eadam_seq_id. AND memory_source = 'MEM'
 /
+
+COMMIT;
 
 INSERT INTO memory_size
 ( eadam_seq_id            
@@ -733,6 +793,7 @@ SELECT /*+ &&sq_fact_hints. */
        MAX(startup_time) max_startup_time
   FROM dba_hist_snapshot_s
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
  GROUP BY
        dbid,
        instance_number
@@ -745,6 +806,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_snapshot_s s,
        start_up u
  WHERE s.eadam_seq_id = &&eadam_seq_id.
+   AND s.dbid = &&eadam_dbid.
    AND s.dbid = u.dbid
    AND s.instance_number = u.instance_number
    AND s.startup_time = u.max_startup_time
@@ -761,6 +823,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_sga_s h,
        snap_id_from s
  WHERE h.eadam_seq_id = &&eadam_seq_id.
+   AND h.dbid = &&eadam_dbid.
    AND h.dbid = s.dbid
    AND h.instance_number = s.instance_number
    AND h.snap_id >= s.min_snap_id
@@ -787,6 +850,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM dba_hist_pgastat_s h,
        snap_id_from s
  WHERE h.eadam_seq_id = &&eadam_seq_id.
+   AND h.dbid = &&eadam_dbid.
    AND h.name = 'maximum PGA allocated'
    AND h.dbid = s.dbid
    AND h.instance_number = s.instance_number
@@ -806,10 +870,10 @@ SELECT /*+ &&sq_fact_hints. */
        par.inst_id,
        par.pga_aggregate_target,
        pga_max.bytes max_bytes,
-       GREATEST(par.pga_aggregate_target, pga_max.bytes) bytes
+       GREATEST(NVL(par.pga_aggregate_target, 0), NVL(pga_max.bytes, 0)) bytes
   FROM par,
        pga_max
- WHERE par.instance_number = pga_max.instance_number
+ WHERE par.instance_number = pga_max.instance_number(+)
 ),
 amm AS (
 SELECT /*+ &&sq_fact_hints. */
@@ -822,7 +886,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.inst_id,
        par.memory_target,
        par.memory_max_target,
-       GREATEST(par.memory_target, par.memory_max_target) + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(par.memory_target, 0), NVL(par.memory_max_target, 0)) + (6 * 1024 * 1024) bytes
   FROM par
 ),
 asmm AS (
@@ -837,7 +901,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.sga_target,
        par.sga_max_size,
        pga.bytes pga_bytes,
-       GREATEST(sga_target, sga_max_size) + pga.bytes + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(par.sga_target, 0), NVL(par.sga_max_size, 0)) + NVL(pga.bytes, 0) + (6 * 1024 * 1024) bytes
   FROM par,
        pga
  WHERE par.instance_number = pga.instance_number
@@ -854,10 +918,10 @@ SELECT /*+ &&sq_fact_hints. */
        sga_max.bytes max_sga,
        pga.bytes max_pga,
        pga.pga_aggregate_target,
-       sga_max.bytes + pga.bytes + (5 * 1024 * 1024) bytes
+       sga_max.bytes + NVL(pga.bytes, 0) + (5 * 1024 * 1024) bytes
   FROM sga_max,
        pga
- WHERE sga_max.instance_number = pga.instance_number
+ WHERE sga_max.instance_number(+) = pga.instance_number
 ),
 them_all AS (
 SELECT /*+ &&sq_fact_hints. */
@@ -868,7 +932,7 @@ SELECT /*+ &&sq_fact_hints. */
        amm.instance_number,
        amm.instance_name,
        amm.inst_id,
-       GREATEST(amm.bytes, asmm.bytes, no_mm.bytes) bytes,
+       GREATEST(NVL(amm.bytes, 0), NVL(asmm.bytes, 0), NVL(no_mm.bytes, 0)) bytes,
        amm.memory_target,
        amm.memory_max_target,
        asmm.sga_target,
@@ -935,13 +999,19 @@ SELECT MIN(eadam_seq_id) eadam_seq_id,
   FROM them_all
 /
 
-SELECT COUNT(*) FROM memory_size WHERE eadam_seq_id = &&eadam_seq_id. AND memory_source = 'MEM'
+COMMIT;
+
+SELECT * FROM memory_size WHERE eadam_seq_id = &&eadam_seq_id. AND memory_source = 'MEM'
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE memory_size WHERE eadam_seq_id = &&eadam_seq_id. AND memory_source = 'AWR'
 /
+
+COMMIT;
 
 INSERT INTO memory_size
 ( eadam_seq_id            
@@ -978,8 +1048,9 @@ SELECT /*+ &&sq_fact_hints. */
        parameter_name
   FROM dba_hist_parameter_s
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND parameter_name IN ('memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 'pga_aggregate_target')
-   AND (snap_id, dbid, instance_number) IN (SELECT s.snap_id, s.dbid, s.instance_number FROM dba_hist_snapshot_s s WHERE s.eadam_seq_id = &&eadam_seq_id.)
+   AND (snap_id, dbid, instance_number) IN (SELECT s.snap_id, s.dbid, s.instance_number FROM dba_hist_snapshot_s s WHERE s.eadam_seq_id = &&eadam_seq_id. AND s.dbid = &&eadam_dbid.)
  GROUP BY
        dbid,
        instance_number,
@@ -995,6 +1066,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM max_snap s,
        dba_hist_parameter_s p
  WHERE p.eadam_seq_id = &&eadam_seq_id.
+   AND p.dbid = &&eadam_dbid.
    AND p.snap_id = s.snap_id
    AND p.dbid = s.dbid
    AND p.instance_number = s.instance_number
@@ -1011,6 +1083,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM last_value p,
        dba_hist_snapshot_s s
  WHERE s.eadam_seq_id = &&eadam_seq_id.
+   AND s.dbid = &&eadam_dbid.
    AND s.snap_id = p.snap_id
    AND s.dbid = p.dbid
    AND s.instance_number = p.instance_number
@@ -1031,6 +1104,7 @@ SELECT /*+ &&sq_fact_hints. */
   FROM last_snap p,
        dba_hist_database_instanc_s di
  WHERE di.eadam_seq_id = &&eadam_seq_id.
+   AND di.dbid = &&eadam_dbid.
    AND di.dbid = p.dbid
    AND di.instance_number = p.instance_number
    AND di.startup_time = p.startup_time
@@ -1051,6 +1125,7 @@ SELECT /*+ &&sq_fact_hints. */
        SUM(value) sga_size
   FROM dba_hist_sga_s
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
  GROUP BY
        eadam_seq_id,
        snap_id,
@@ -1074,6 +1149,7 @@ SELECT /*+ &&sq_fact_hints. */
        MAX(value) bytes
   FROM dba_hist_pgastat_s
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND name = 'maximum PGA allocated'
  GROUP BY
        dbid,
@@ -1089,7 +1165,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.instance_name,
        par.pga_aggregate_target,
        pga_max.bytes max_bytes,
-       GREATEST(par.pga_aggregate_target, pga_max.bytes) bytes
+       GREATEST(NVL(par.pga_aggregate_target, 0), NVL(pga_max.bytes, 0)) bytes
   FROM pga_max,
        par
  WHERE par.dbid = pga_max.dbid
@@ -1105,7 +1181,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.instance_name,
        par.memory_target,
        par.memory_max_target,
-       GREATEST(par.memory_target, par.memory_max_target) + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(par.memory_target, 0), NVL(par.memory_max_target, 0)) + (6 * 1024 * 1024) bytes
   FROM par
 ),
 asmm AS (
@@ -1119,7 +1195,7 @@ SELECT /*+ &&sq_fact_hints. */
        par.sga_target,
        par.sga_max_size,
        pga.bytes pga_bytes,
-       GREATEST(sga_target, sga_max_size) + pga.bytes + (6 * 1024 * 1024) bytes
+       GREATEST(NVL(par.sga_target, 0), NVL(par.sga_max_size, 0)) + NVL(pga.bytes, 0) + (6 * 1024 * 1024) bytes
   FROM pga,
        par
  WHERE par.dbid = pga.dbid
@@ -1150,7 +1226,7 @@ SELECT /*+ &&sq_fact_hints. */
        amm.host_name,
        amm.instance_number,
        amm.instance_name,
-       GREATEST(amm.bytes, asmm.bytes, no_mm.bytes) bytes,
+       GREATEST(NVL(amm.bytes, 0), NVL(asmm.bytes, 0), NVL(no_mm.bytes, 0)) bytes,
        amm.memory_target,
        amm.memory_max_target,
        asmm.sga_target,
@@ -1219,15 +1295,21 @@ SELECT MIN(eadam_seq_id) eadam_seq_id,
   FROM them_all
 /
 
-SELECT COUNT(*) FROM memory_size WHERE eadam_seq_id = &&eadam_seq_id. AND memory_source = 'AWR'
+COMMIT;
+
+SELECT * FROM memory_size WHERE eadam_seq_id = &&eadam_seq_id. AND memory_source = 'AWR'
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
-DELETE memory_series WHERE eadam_seq_id = &&eadam_seq_id.
+DELETE /*+ PARALLEL(4) */ memory_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
 
-INSERT INTO memory_series 
+COMMIT;
+
+INSERT /*+ APPEND PARALLEL(4) */ INTO memory_series 
 ( eadam_seq_id        
 , aggregate_level
 , dbid                
@@ -1275,6 +1357,7 @@ SELECT
 , s.sga_gb
 , s.pga_gb
   FROM my_instances i, TABLE(eadam.memory_usage_awr(&&eadam_seq_id., i.instance_number)) s
+ WHERE s.dbid = &&eadam_dbid.
  UNION ALL
 SELECT 
   d.eadam_seq_id
@@ -1293,15 +1376,22 @@ SELECT
 , s.sga_gb
 , s.pga_gb
   FROM my_databases d, TABLE(eadam.memory_usage_awr(&&eadam_seq_id.)) s
+ WHERE s.dbid = &&eadam_dbid.
 /
 
-SELECT COUNT(*) FROM memory_series WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT /*+ PARALLEL(4) */ COUNT(*) FROM memory_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE database_size WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+COMMIT;
 
 INSERT INTO database_size
 ( eadam_seq_id
@@ -1372,13 +1462,19 @@ SELECT d.eadam_seq_id,
        dbsize s
 /
 
-SELECT COUNT(*) FROM database_size WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT * FROM database_size WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE iops_and_mbps WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+COMMIT;
 
 INSERT INTO iops_and_mbps
 ( eadam_seq_id      
@@ -1602,15 +1698,21 @@ SELECT /*+ ORDERED */
  WHERE io_perc_99_99.rw_iops > 0
 /
 
-SELECT COUNT(*) FROM iops_and_mbps WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT * FROM iops_and_mbps WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
-DELETE iops_series WHERE eadam_seq_id = &&eadam_seq_id.
+DELETE /*+ PARALLEL(4) */ iops_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
 
-INSERT INTO iops_series 
+COMMIT;
+
+INSERT /*+ APPEND PARALLEL(4) */ INTO iops_series 
 ( eadam_seq_id        
 , aggregate_level
 , dbid                
@@ -1658,6 +1760,7 @@ SELECT
 , s.r_iops 
 , s.w_iops 
   FROM my_instances i, TABLE(eadam.iops(&&eadam_seq_id., i.instance_number, &&percentile.)) s
+ WHERE s.dbid = &&eadam_dbid.
  UNION ALL
 SELECT 
   d.eadam_seq_id
@@ -1676,17 +1779,24 @@ SELECT
 , s.r_iops 
 , s.w_iops 
   FROM my_databases d, TABLE(eadam.iops(&&eadam_seq_id., NULL, &&percentile.)) s
+ WHERE s.dbid = &&eadam_dbid.
 /
 
-SELECT COUNT(*) FROM iops_series WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT /*+ PARALLEL(4) */ COUNT(*) FROM iops_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
-DELETE mbps_series WHERE eadam_seq_id = &&eadam_seq_id.
+DELETE /*+ PARALLEL(4) */ mbps_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
 
-INSERT INTO mbps_series 
+COMMIT;
+
+INSERT /*+ APPEND PARALLEL(4) */ INTO mbps_series 
 ( eadam_seq_id        
 , aggregate_level
 , dbid                
@@ -1734,6 +1844,7 @@ SELECT
 , s.r_mbps 
 , s.w_mbps 
   FROM my_instances i, TABLE(eadam.mbps(&&eadam_seq_id., i.instance_number, &&percentile.)) s
+ WHERE s.dbid = &&eadam_dbid.
  UNION ALL
 SELECT 
   d.eadam_seq_id
@@ -1752,17 +1863,24 @@ SELECT
 , s.r_mbps 
 , s.w_mbps 
   FROM my_databases d, TABLE(eadam.mbps(&&eadam_seq_id., NULL, &&percentile.)) s
+ WHERE s.dbid = &&eadam_dbid.
 /
 
-SELECT COUNT(*) FROM mbps_series WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT /*+ PARALLEL(4) */ COUNT(*) FROM mbps_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
-DELETE FROM time_series WHERE eadam_seq_id = &&eadam_seq_id.
+DELETE /*+ PARALLEL(4) */ FROM time_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
 
-INSERT INTO time_series 
+COMMIT;
+
+INSERT /*+ APPEND PARALLEL(4) */ INTO time_series 
 ( eadam_seq_id       
 , aggregate_level
 , dbid               
@@ -1803,7 +1921,7 @@ INSERT INTO time_series
 )
 WITH
 my_time AS (
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. PARALLEL(4) */
   eadam_seq_id   
 , aggregate_level
 , dbid           
@@ -1815,8 +1933,9 @@ SELECT /*+ &&sq_fact_hints. */
 , end_time       
   FROM cpu_demand_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
  UNION
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. PARALLEL(4) */
   eadam_seq_id   
 , aggregate_level
 , dbid           
@@ -1828,8 +1947,9 @@ SELECT /*+ &&sq_fact_hints. */
 , end_time       
   FROM cpu_consumption_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
  UNION
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. PARALLEL(4) */
   eadam_seq_id   
 , aggregate_level
 , dbid           
@@ -1841,8 +1961,9 @@ SELECT /*+ &&sq_fact_hints. */
 , end_time       
   FROM memory_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
  UNION
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. PARALLEL(4) */
   eadam_seq_id   
 , aggregate_level
 , dbid           
@@ -1854,8 +1975,9 @@ SELECT /*+ &&sq_fact_hints. */
 , end_time       
   FROM iops_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
  UNION
-SELECT /*+ &&sq_fact_hints. */
+SELECT /*+ &&sq_fact_hints. PARALLEL(4) */
   eadam_seq_id   
 , aggregate_level
 , dbid           
@@ -1867,8 +1989,9 @@ SELECT /*+ &&sq_fact_hints. */
 , end_time       
   FROM mbps_series
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
 )
-SELECT 
+SELECT /*+ PARALLEL(4) */ 
   t.eadam_seq_id   
 , t.aggregate_level
 , t.dbid           
@@ -1949,13 +2072,19 @@ SELECT
    AND s5.end_time(+)        = t.end_time       
 /
 
-SELECT COUNT(*) FROM time_series WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT /*+ PARALLEL(4) */ COUNT(*) FROM time_series WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE FROM instances WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+COMMIT;
 
 INSERT INTO instances
 ( eadam_seq_id       
@@ -2078,7 +2207,7 @@ INSERT INTO instances
 )
 WITH
 i2 AS (
-SELECT DISTINCT
+SELECT /*+ PARALLEL(4) */ DISTINCT
        TO_NUMBER(value) instance_number,
        inst_id
   FROM gv_system_parameter2_s
@@ -2095,6 +2224,7 @@ SELECT /*+ &&sq_fact_hints. */
 , instance_name  
   FROM cpu_time
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND aggregate_level = 'I'
  UNION
 SELECT /*+ &&sq_fact_hints. */
@@ -2106,6 +2236,7 @@ SELECT /*+ &&sq_fact_hints. */
 , instance_name  
   FROM memory_size
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND aggregate_level = 'I'
  UNION
 SELECT /*+ &&sq_fact_hints. */
@@ -2117,6 +2248,7 @@ SELECT /*+ &&sq_fact_hints. */
 , instance_name  
   FROM iops_and_mbps
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
    AND aggregate_level = 'I'
 )
 SELECT 
@@ -2298,13 +2430,19 @@ SELECT
    AND io.aggregate_level(+) = 'I'
 /
 
-SELECT COUNT(*) FROM instances WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT * FROM instances WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
 DELETE databases WHERE eadam_seq_id = &&eadam_seq_id.
 /
+
+COMMIT;
 
 INSERT INTO databases
 ( eadam_seq_id       
@@ -2466,6 +2604,7 @@ SELECT
 , SUM(CASE file_type WHEN 'Control' THEN size_gb ELSE 0 END)    db_control_size_gb
   FROM database_size
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
  GROUP BY
   eadam_seq_id
 , dbid        
@@ -2512,6 +2651,7 @@ SELECT
 , SUM(max_pga_alloc_gb_awr        ) max_pga_alloc_gb_awr       
   FROM instances
  WHERE eadam_seq_id = &&eadam_seq_id.
+   AND dbid = &&eadam_dbid.
  GROUP BY
   eadam_seq_id
 , dbid        
@@ -2689,10 +2829,64 @@ SELECT
    AND io.aggregate_level(+) = 'D'
 /
 
-SELECT COUNT(*) FROM databases WHERE eadam_seq_id = &&eadam_seq_id.
+COMMIT;
+
+SELECT * FROM databases WHERE eadam_seq_id = &&eadam_seq_id.
 /
 
-COMMIT;
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
+
+PRO Row Count for EADAM
+PRO ~~~~~~~~~
+SET SERVEROUT ON;
+DECLARE
+  l_row_count NUMBER;
+BEGIN
+  FOR i IN (SELECT table_name FROM user_tables WHERE table_name NOT LIKE '%\_E' ESCAPE '\' ORDER BY table_name)
+  LOOP
+    EXECUTE IMMEDIATE 'SELECT /*+ PARALLEL(4) */ COUNT(*) FROM '||i.table_name INTO l_row_count;
+    DBMS_OUTPUT.put_line('|'||LPAD(TO_CHAR(l_row_count, '999,999,999,990'), 17)||'  '||i.table_name);
+  END LOOP;
+END;
+/
+SET SERVEROUT OFF;
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
+
+PRO Row Count for EADAM_SEQ_ID "&&eadam_seq_id."
+PRO ~~~~~~~~~
+SET SERVEROUT ON;
+DECLARE
+  l_row_count NUMBER;
+BEGIN
+  FOR i IN (SELECT table_name FROM user_tab_columns WHERE column_name = 'EADAM_SEQ_ID' ORDER BY table_name)
+  LOOP
+    EXECUTE IMMEDIATE 'SELECT /*+ PARALLEL(4) */ COUNT(*) FROM '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id.' INTO l_row_count;
+    DBMS_OUTPUT.put_line('|'||LPAD(TO_CHAR(l_row_count, '999,999,999,990'), 17)||'  '||i.table_name);
+  END LOOP;
+END;
+/
+SET SERVEROUT OFF;
+
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
+
+PRO Row Count for EADAM_SEQ_ID "&&eadam_seq_id." and DBID = "&&eadam_dbid."
+PRO ~~~~~~~~~
+SET SERVEROUT ON;
+DECLARE
+  l_row_count NUMBER;
+BEGIN
+  FOR i IN (SELECT s.table_name FROM user_tab_columns s, user_tab_columns d  WHERE s.column_name = 'EADAM_SEQ_ID' AND d.column_name = 'DBID' AND d.table_name = s.table_name ORDER BY s.table_name)
+  LOOP
+    EXECUTE IMMEDIATE 'SELECT /*+ PARALLEL(4) */ COUNT(*) FROM '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id. AND dbid = &&eadam_dbid.' INTO l_row_count;
+    DBMS_OUTPUT.put_line('|'||LPAD(TO_CHAR(l_row_count, '999,999,999,990'), 17)||'  '||i.table_name);
+  END LOOP;
+END;
+/
+SET SERVEROUT OFF;
+
+WHENEVER SQLERROR CONTINUE;
+SPO eadam_08_xso_&&eadam_seq_id..txt APP;
 
 /* ------------------------------------------------------------------------- */
 
@@ -2712,5 +2906,4 @@ PRO eadam_seq_id: &&eadam_seq_id.
 
 /* ------------------------------------------------------------------------- */
 
-SET ECHO OFF FEED OFF;
 SPO OFF;

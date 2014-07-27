@@ -44,7 +44,7 @@ HOS zip -q &&main_compressed_filename._&&file_creation_time. &&eadam36_log..txt
 
 -- spools query
 SPO &&common_prefix._query.sql;
-SELECT 'SELECT ROWNUM row_num, v0.* FROM ('||CHR(10)||TRIM(CHR(10) FROM :sql_text)||CHR(10)||') v0 WHERE ROWNUM <= &&max_rows.' FROM DUAL;
+SELECT 'SELECT ROWNUM row_number, v0.* FROM ('||CHR(10)||TRIM(CHR(10) FROM :sql_text)||CHR(10)||') v0 WHERE ROWNUM <= &&max_rows.' FROM DUAL;
 SPO OFF;
 SET HEA ON;
 GET &&common_prefix._query.sql
@@ -62,7 +62,9 @@ HOS zip -q &&main_compressed_filename._&&file_creation_time. &&main_report_name.
 @@&&skip_lch.&&chrt_reports.eadam36_9e_one_line_chart.sql
 @@&&skip_pch.&&chrt_reports.eadam36_9f_one_pie_chart.sql
 EXEC :sql_text := NULL;
-COL row_num FOR 9999999 HEA '#' PRI;
+COL row_number FOR 9999999 HEA '#' PRI;
+COL eadam_seq_id_src NOPRI;
+COL row_num NOPRI;
 DEF abstract = '';
 DEF abstract2 = '';
 DEF foot = '';

@@ -157,7 +157,7 @@ DECLARE
       l_cols := l_cols||CHR(10);
     END LOOP;
     l_cols := l_cols||')';
-    l_sql := 'CREATE TABLE '||TRIM(LOWER(SUBSTR(REPLACE(p_table_name, '$'), 1, 25)))||'_s'||CHR(10)||l_cols;
+    l_sql := 'CREATE TABLE '||TRIM(LOWER(SUBSTR(REPLACE(p_table_name, '$'), 1, 25)))||'_s'||CHR(10)||l_cols||' PARALLEL 4';
     INSERT INTO sql_log VALUES (l_sql);
     BEGIN
       EXECUTE IMMEDIATE l_sql; 
@@ -169,36 +169,30 @@ DECLARE
     END;
   END create_staging_table;
 BEGIN
-  create_staging_table('V_$DATAFILE');
-  create_staging_table('V_$TEMPFILE');
-  create_staging_table('V_$CONTROLFILE');
-  create_staging_table('GV_$LOG');
+  create_staging_table('DBA_HIST_ACTIVE_SESS_HISTORY');
+  create_staging_table('DBA_HIST_DATABASE_INSTANCE');
+  create_staging_table('DBA_HIST_EVENT_HISTOGRAM');
+  create_staging_table('DBA_HIST_OSSTAT');
+  create_staging_table('DBA_HIST_PARAMETER');
+  create_staging_table('DBA_HIST_PGASTAT');
+  create_staging_table('DBA_HIST_SGA');
+  create_staging_table('DBA_HIST_SGASTAT');
+  create_staging_table('DBA_HIST_SNAPSHOT');
+  create_staging_table('DBA_HIST_SQL_PLAN');
+  create_staging_table('DBA_HIST_SQLSTAT');
+  create_staging_table('DBA_HIST_SQLTEXT');
+  create_staging_table('DBA_HIST_SYS_TIME_MODEL');
+  create_staging_table('DBA_HIST_SYSSTAT');
   create_staging_table('GV_$ACTIVE_SESSION_HISTORY');
-  create_staging_table('GV_$SYSTEM_PARAMETER2');
-  create_staging_table('GV_$SQL');
+  create_staging_table('GV_$LOG');
   create_staging_table('GV_$SQL_MONITOR');
   create_staging_table('GV_$SQL_PLAN_MONITOR');
   create_staging_table('GV_$SQL_PLAN_STATISTICS_ALL');
-  create_staging_table('DBA_HIST_SNAPSHOT');
-  create_staging_table('DBA_HIST_OSSTAT');
-  create_staging_table('DBA_HIST_SYS_TIME_MODEL');
-  create_staging_table('DBA_HIST_PGASTAT');
-  create_staging_table('DBA_HIST_SYSSTAT');
-  create_staging_table('DBA_HIST_SYSTEM_EVENT');
-  create_staging_table('DBA_HIST_SQLSTAT');
-  create_staging_table('DBA_HIST_SERVICE_STAT');
-  create_staging_table('DBA_HIST_SGA');
-  create_staging_table('AUDIT_ACTIONS');
-  create_staging_table('DBA_HIST_EVENT_HISTOGRAM');
-  create_staging_table('DBA_HIST_DATABASE_INSTANCE');
-  create_staging_table('DBA_HIST_IOSTAT_DETAIL');
-  create_staging_table('DBA_HIST_IOSTAT_FILETYPE');
-  create_staging_table('DBA_HIST_IOSTAT_FUNCTION');
-  create_staging_table('DBA_HIST_SGASTAT');
-  create_staging_table('DBA_HIST_ACTIVE_SESS_HISTORY');
-  create_staging_table('DBA_HIST_SQLTEXT');
-  create_staging_table('DBA_HIST_SQL_PLAN');
-  create_staging_table('DBA_HIST_PARAMETER');
+  create_staging_table('GV_$SQL');
+  create_staging_table('GV_$SYSTEM_PARAMETER2');
+  create_staging_table('V_$CONTROLFILE');
+  create_staging_table('V_$DATAFILE');
+  create_staging_table('V_$TEMPFILE');
 END;
 /
 

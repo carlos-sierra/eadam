@@ -1,30 +1,34 @@
 -- Extracts DBA_HIST and GV$ metadata into flat files
 -- Please execute connected as SYS
--- local directory must have enough space (proportional to SYSAUX size)
--- extraction types: C is a subset of S. S is a subset of A.  C < S < A
+-- local directory must have at least 10G of free space
+-- extraction types: PT (Performance Evaluation) or SP (Sizing and Provisioning)
+-- Sizing and Provisioning (SP) is a subset of Performance Evaluation (PE)
+-- Default parameter values are 100 days of history, and PE for extraction type
+-- This scripts extracts data from DBA_HIST views, which are part of the
+-- Oracle Diagnostics Pack. Same about ASH views.
 
 SET TERM ON ECHO OFF;
 CL COL;
 PRO
-PRO Parameter 1:
-PRO Days to extract (default 100):
+PRO Parameter 1: (default 100)
+PRO Days to extract 
 PRO
 DEF days = '&1';
 PRO
 PRO
-PRO Parameter 2:
-PRO Extraction Type [ (A)ll | (S)ql | (C)apacity ] (default S):
+PRO Parameter 2: (default PE)
+PRO Extraction Type [ Performance Evaluation (PE) | Sizing and Provisioning (SP) ] 
 PRO
 DEF extraction_type = '&2';
 PRO
 SET TERM OFF;
 
 VAR days NUMBER;
-EXEC :days := TO_NUMBER(NVL(TRIM('&&days.'), '100'));
+EXEC :days := GREATEST(TO_NUMBER(NVL(TRIM('&&days.'), '100')), 8);
 
-VAR extraction_type VARCHAR2(1);
+VAR extraction_type VARCHAR2(2);
 BEGIN
-SELECT CASE WHEN UPPER(SUBSTR(TRIM('&&extraction_type.'), 1, 1)) IN ('A', 'S', 'C') THEN UPPER(SUBSTR(TRIM('&&extraction_type.'), 1, 1)) ELSE 'S' END 
+SELECT CASE WHEN UPPER(SUBSTR(TRIM('&&extraction_type.'), 1, 2)) IN ('PE', 'SP') THEN UPPER(SUBSTR(TRIM('&&extraction_type.'), 1, 2)) ELSE 'PE' END 
 INTO :extraction_type FROM DUAL;
 END;
 /
@@ -67,17 +71,21 @@ SELECT TRANSLATE('&&&&host_name_short.',
 DEF tar_filename = 'eadam_&&database_name_short._&&host_name_short._&&file_creation_time.';
 
 -- lower limit for snap_id to collect
-COL min_snap_id NEW_V min_snap_id NOPRI;
+COL min_snap_id NEW_V min_snap_id;
 SELECT NVL(MAX(snap_id), 0) min_snap_id
   FROM dba_hist_snapshot 
  WHERE begin_interval_time < TRUNC(SYSDATE) - :days;
+
+-- dbid to collect
+COL edb360_dbid NEW_V edb360_dbid;
+SELECT dbid edb360_dbid FROM v$database;
 
 /* ------------------------------------------------------------------------- */
 
 SET TERM OFF ECHO OFF DEF ON FEED OFF FLU OFF HEA OFF NUM 30 LIN 32767 LONG 4000000 LONGC 4000 NEWP NONE PAGES 0 SHOW OFF SQLC MIX TAB OFF TRIMS ON VER OFF TIM OFF TIMI OFF ARRAY 100 SQLP SQL> BLO . RECSEP OFF COLSEP '&&fields_delimiter.';
 
 SET TERM ON;
-PRO dba_hist_xtr_control
+PRO -> 1/26 dba_hist_xtr_control
 SET TERM OFF;
 SPO dba_hist_xtr_control.txt;
 SELECT d.dbid, d.name dbname, d.db_unique_name, d.platform_name,
@@ -93,7 +101,7 @@ HOS rm dba_hist_xtr_control.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_tab_columns
+PRO -> 2/26 dba_tab_columns
 SET TERM OFF;
 SPO dba_tab_columns.txt;
 SELECT table_name,
@@ -106,36 +114,30 @@ SELECT table_name,
   FROM dba_tab_columns
  WHERE owner = 'SYS'
    AND table_name IN 
-('V_$DATAFILE'
-,'V_$TEMPFILE'
-,'V_$CONTROLFILE'
-,'GV_$LOG'
-,'GV_$ACTIVE_SESSION_HISTORY'
-,'GV_$SYSTEM_PARAMETER2'
-,'GV_$SQL'
-,'GV_$SQL_MONITOR'
-,'GV_$SQL_PLAN_MONITOR'
-,'GV_$SQL_PLAN_STATISTICS_ALL'
-,'DBA_HIST_SNAPSHOT'
-,'DBA_HIST_OSSTAT'
-,'DBA_HIST_SYS_TIME_MODEL'
-,'DBA_HIST_PGASTAT'
-,'DBA_HIST_SYSSTAT'
-,'DBA_HIST_SYSTEM_EVENT'
-,'DBA_HIST_SQLSTAT'
-,'DBA_HIST_SERVICE_STAT'
-,'DBA_HIST_SGA'
-,'AUDIT_ACTIONS'
-,'DBA_HIST_EVENT_HISTOGRAM'
+('DBA_HIST_ACTIVE_SESS_HISTORY'
 ,'DBA_HIST_DATABASE_INSTANCE'
-,'DBA_HIST_IOSTAT_DETAIL'
-,'DBA_HIST_IOSTAT_FILETYPE'
-,'DBA_HIST_IOSTAT_FUNCTION'
-,'DBA_HIST_SGASTAT'
-,'DBA_HIST_ACTIVE_SESS_HISTORY'
-,'DBA_HIST_SQLTEXT'
-,'DBA_HIST_SQL_PLAN'
+,'DBA_HIST_EVENT_HISTOGRAM'     /* PE */
+,'DBA_HIST_OSSTAT'              /* PE */
 ,'DBA_HIST_PARAMETER'
+,'DBA_HIST_PGASTAT'
+,'DBA_HIST_SGA'
+,'DBA_HIST_SGASTAT'
+,'DBA_HIST_SNAPSHOT'
+,'DBA_HIST_SQL_PLAN'            /* PE */
+,'DBA_HIST_SQLSTAT'             /* PE */
+,'DBA_HIST_SQLTEXT'             /* PE */ 
+,'DBA_HIST_SYS_TIME_MODEL'
+,'DBA_HIST_SYSSTAT'
+,'GV_$ACTIVE_SESSION_HISTORY'
+,'GV_$LOG'
+,'GV_$SQL_MONITOR'              /* PE */
+,'GV_$SQL_PLAN_MONITOR'         /* PE */
+,'GV_$SQL_PLAN_STATISTICS_ALL'  /* PE */
+,'GV_$SQL'                      /* PE */
+,'GV_$SYSTEM_PARAMETER2'
+,'V_$CONTROLFILE'
+,'V_$DATAFILE'                  
+,'V_$TEMPFILE'
 );
 SPO OFF;
 HOS gzip -v dba_tab_columns.txt
@@ -145,7 +147,7 @@ HOS rm dba_tab_columns.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO v$datafile
+PRO -> 3/26 v$datafile
 SET TERM OFF;
 SPO v_datafile.txt;
 SELECT * FROM v$datafile;
@@ -157,7 +159,7 @@ HOS rm v_datafile.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO v$tempfile
+PRO -> 4/26 v$tempfile
 SET TERM OFF;
 SPO v_tempfile.txt;
 SELECT * FROM v$tempfile;
@@ -169,7 +171,7 @@ HOS rm v_tempfile.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO v$controlfile
+PRO -> 5/26 v$controlfile
 SET TERM OFF;
 SPO v_controlfile.txt;
 SELECT * FROM v$controlfile;
@@ -181,7 +183,7 @@ HOS rm v_controlfile.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO gv$log
+PRO -> 6/26 gv$log
 SET TERM OFF;
 SPO gv_log.txt;
 SELECT * FROM gv$log;
@@ -193,10 +195,11 @@ HOS rm gv_log.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_snapshot
+PRO -> 7/26 dba_hist_snapshot
 SET TERM OFF;
 SPO dba_hist_snapshot.txt;
-SELECT * FROM dba_hist_snapshot WHERE snap_id > &&min_snap_id.;
+SELECT * FROM dba_hist_snapshot 
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.;
 SPO OFF;
 HOS gzip -v dba_hist_snapshot.txt
 HOS tar -rvf &&tar_filename..tar dba_hist_snapshot.txt.gz
@@ -205,10 +208,11 @@ HOS rm dba_hist_snapshot.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_pgastat
+PRO -> 8/26 dba_hist_pgastat
 SET TERM OFF;
 SPO dba_hist_pgastat.txt;
-SELECT * FROM dba_hist_pgastat WHERE snap_id > &&min_snap_id.;
+SELECT * FROM dba_hist_pgastat 
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.;
 SPO OFF;
 HOS gzip -v dba_hist_pgastat.txt
 HOS tar -rvf &&tar_filename..tar dba_hist_pgastat.txt.gz
@@ -217,10 +221,24 @@ HOS rm dba_hist_pgastat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_sysstat
+PRO -> 9/26 dba_hist_sgastat
+SET TERM OFF;
+SPO dba_hist_sgastat.txt;
+SELECT * FROM dba_hist_sgastat 
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.;
+SPO OFF;
+HOS gzip -v dba_hist_sgastat.txt
+HOS tar -rvf &&tar_filename..tar dba_hist_sgastat.txt.gz
+HOS rm dba_hist_sgastat.txt.gz
+
+/* ------------------------------------------------------------------------- */
+
+SET TERM ON;
+PRO -> 10/26 dba_hist_sysstat
 SET TERM OFF;
 SPO dba_hist_sysstat.txt;
-SELECT * FROM dba_hist_sysstat WHERE snap_id > &&min_snap_id.;
+SELECT * FROM dba_hist_sysstat 
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.;
 SPO OFF;
 HOS gzip -v dba_hist_sysstat.txt
 HOS tar -rvf &&tar_filename..tar dba_hist_sysstat.txt.gz
@@ -229,10 +247,11 @@ HOS rm dba_hist_sysstat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_sga
+PRO -> 11/26 dba_hist_sga
 SET TERM OFF;
 SPO dba_hist_sga.txt;
-SELECT * FROM dba_hist_sga WHERE snap_id > &&min_snap_id.;
+SELECT * FROM dba_hist_sga 
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.;
 SPO OFF;
 HOS gzip -v dba_hist_sga.txt
 HOS tar -rvf &&tar_filename..tar dba_hist_sga.txt.gz
@@ -241,10 +260,11 @@ HOS rm dba_hist_sga.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_database_instance
+PRO -> 12/26 dba_hist_database_instance
 SET TERM OFF;
 SPO dba_hist_database_instance.txt;
-SELECT * FROM dba_hist_database_instance;
+SELECT * FROM dba_hist_database_instance
+WHERE dbid = &&edb360_dbid.;
 SPO OFF;
 HOS gzip -v dba_hist_database_instance.txt
 HOS tar -rvf &&tar_filename..tar dba_hist_database_instance.txt.gz
@@ -253,14 +273,15 @@ HOS rm dba_hist_database_instance.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO gv$active_session_history
+PRO -> 13/26 gv$active_session_history
 SET TERM OFF;
 SPO gv_active_session_history.txt;
 SELECT * FROM gv$active_session_history
-WHERE (CASE 
-WHEN :extraction_type = 'C' 
+WHERE sample_time > TRUNC(SYSDATE) - :days
+AND (CASE 
+WHEN :extraction_type = 'SP' 
 AND (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum') THEN 'Y'
-WHEN :extraction_type = 'C' THEN 'N'
+WHEN :extraction_type = 'SP' THEN 'N'
 ELSE 'Y' END) = 'Y';
 SPO OFF;
 HOS gzip -v gv_active_session_history.txt
@@ -270,15 +291,15 @@ HOS rm gv_active_session_history.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO gv$system_parameter2
+PRO -> 14/26 gv$system_parameter2
 SET TERM OFF;
 SPO gv_system_parameter2.txt;
 SELECT * FROM gv$system_parameter2
 WHERE (CASE 
-WHEN :extraction_type = 'C' AND name in ('instance_number', 'instance_name', 
+WHEN :extraction_type = 'SP' AND name in ('instance_number', 'instance_name', 
 'memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 
-'pga_aggregate_target') THEN 'Y'
-WHEN :extraction_type = 'C' THEN 'N'
+'pga_aggregate_target', 'cpu_count') THEN 'Y'
+WHEN :extraction_type = 'SP' THEN 'N'
 ELSE 'Y' END) = 'Y';
 SPO OFF;
 HOS gzip -v gv_system_parameter2.txt
@@ -288,15 +309,15 @@ HOS rm gv_system_parameter2.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_active_sess_history
+PRO -> 15/26 dba_hist_active_sess_history
 SET TERM OFF;
 SPO dba_hist_active_sess_history.txt;
 SELECT * FROM dba_hist_active_sess_history 
-WHERE snap_id > &&min_snap_id.
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.
 AND (CASE 
-WHEN :extraction_type = 'C' 
+WHEN :extraction_type = 'SP' 
 AND (session_state = 'ON CPU' OR event = 'resmgr:cpu quantum') THEN 'Y'
-WHEN :extraction_type = 'C' THEN 'N'
+WHEN :extraction_type = 'SP' THEN 'N'
 ELSE 'Y' END) = 'Y';
 SPO OFF;
 HOS gzip -v dba_hist_active_sess_history.txt
@@ -306,16 +327,17 @@ HOS rm dba_hist_active_sess_history.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_parameter
+PRO -> 16/26 dba_hist_parameter
 SET TERM OFF;
 SPO dba_hist_parameter.txt;
 SELECT * FROM dba_hist_parameter 
-WHERE snap_id > &&min_snap_id.
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.
 AND (CASE 
-WHEN :extraction_type = 'C' 
-AND parameter_name IN ('memory_target', 'memory_max_target', 'sga_target', 
-'sga_max_size', 'pga_aggregate_target') THEN 'Y'
-WHEN :extraction_type = 'C' THEN 'N'
+WHEN :extraction_type = 'SP' 
+AND parameter_name IN ('instance_number', 'instance_name', 
+'memory_target', 'memory_max_target', 'sga_target', 'sga_max_size', 
+'pga_aggregate_target', 'cpu_count') THEN 'Y'
+WHEN :extraction_type = 'SP' THEN 'N'
 ELSE 'Y' END) = 'Y';
 SPO OFF;
 HOS gzip -v dba_hist_parameter.txt
@@ -325,15 +347,15 @@ HOS rm dba_hist_parameter.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_sys_time_model
+PRO -> 17/26 dba_hist_sys_time_model
 SET TERM OFF;
 SPO dba_hist_sys_time_model.txt;
 SELECT * FROM dba_hist_sys_time_model 
-WHERE snap_id > &&min_snap_id. 
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id. 
 AND (CASE 
-WHEN :extraction_type = 'C' 
+WHEN :extraction_type = 'SP' 
 AND stat_name IN ('background cpu time', 'DB CPU') THEN 'Y'
-WHEN :extraction_type = 'C' THEN 'N'
+WHEN :extraction_type = 'SP' THEN 'N'
 ELSE 'Y' END) = 'Y';
 SPO OFF;
 HOS gzip -v dba_hist_sys_time_model.txt
@@ -343,12 +365,12 @@ HOS rm dba_hist_sys_time_model.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_osstat
+PRO -> 18/26 dba_hist_osstat
 SET TERM OFF;
 SPO dba_hist_osstat.txt;
 SELECT * FROM dba_hist_osstat 
-WHERE snap_id > &&min_snap_id. 
-AND :extraction_type IN ('S', 'A');
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id. 
+AND :extraction_type = ('PE');
 SPO OFF;
 HOS gzip -v dba_hist_osstat.txt
 HOS tar -rvf &&tar_filename..tar dba_hist_osstat.txt.gz
@@ -357,26 +379,12 @@ HOS rm dba_hist_osstat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_system_event
-SET TERM OFF;
-SPO dba_hist_system_event.txt;
-SELECT * FROM dba_hist_system_event 
-WHERE snap_id > &&min_snap_id. 
-AND :extraction_type IN ('S', 'A');
-SPO OFF;
-HOS gzip -v dba_hist_system_event.txt
-HOS tar -rvf &&tar_filename..tar dba_hist_system_event.txt.gz
-HOS rm dba_hist_system_event.txt.gz
-
-/* ------------------------------------------------------------------------- */
-
-SET TERM ON;
-PRO dba_hist_sqlstat
+PRO -> 19/26 dba_hist_sqlstat
 SET TERM OFF;
 SPO dba_hist_sqlstat.txt;
 SELECT * FROM dba_hist_sqlstat 
-WHERE snap_id > &&min_snap_id. 
-AND :extraction_type IN ('S', 'A');
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id. 
+AND :extraction_type = ('PE');
 SPO OFF;
 HOS gzip -v dba_hist_sqlstat.txt
 HOS tar -rvf &&tar_filename..tar dba_hist_sqlstat.txt.gz
@@ -385,47 +393,21 @@ HOS rm dba_hist_sqlstat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_service_stat
-SET TERM OFF;
-SPO dba_hist_service_stat.txt;
-SELECT * FROM dba_hist_service_stat 
-WHERE snap_id > &&min_snap_id. 
-AND :extraction_type IN ('S', 'A');
-SPO OFF;
-HOS gzip -v dba_hist_service_stat.txt
-HOS tar -rvf &&tar_filename..tar dba_hist_service_stat.txt.gz
-HOS rm dba_hist_service_stat.txt.gz
-
-/* ------------------------------------------------------------------------- */
-
-SET TERM ON;
-PRO audit_actions
-SET TERM OFF;
-SPO audit_actions.txt;
-SELECT * FROM audit_actions WHERE :extraction_type IN ('S', 'A');
-SPO OFF;
-HOS gzip audit_actions.txt
-HOS tar -rvf &&tar_filename..tar audit_actions.txt.gz
-HOS rm audit_actions.txt.gz
-
-/* ------------------------------------------------------------------------- */
-
-SET TERM ON;
-PRO dba_hist_sqltext
+PRO -> 20/26 dba_hist_sqltext
 SET TERM OFF;
 SPO dba_hist_sqltext.txt;
 WITH extracted_sql_id AS (
 SELECT /*+ materialize result_cache */
-       DISTINCT dbid, sql_id 
+       DISTINCT sql_id 
   FROM dba_hist_sqlstat
- WHERE snap_id > &&min_snap_id. 
-   AND :extraction_type IN ('S', 'A'))
+ WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id. 
+   AND :extraction_type = ('PE'))
 SELECT h.* 
   FROM dba_hist_sqltext h,
        extracted_sql_id s
  WHERE NVL(DBMS_LOB.instr(h.sql_text, '&&fields_delimiter.'), 0) = 0
-   AND :extraction_type IN ('S', 'A')
-   AND s.dbid = h.dbid
+   AND :extraction_type = ('PE')
+   AND h.dbid = &&edb360_dbid. 
    AND s.sql_id = h.sql_id;
 SPO OFF;
 HOS gzip -v dba_hist_sqltext.txt
@@ -435,10 +417,11 @@ HOS rm dba_hist_sqltext.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO gv$sql_monitor
+PRO -> 21/26 gv$sql_monitor
 SET TERM OFF;
 SPO gv_sql_monitor.txt;
-SELECT * FROM gv$sql_monitor WHERE :extraction_type IN ('S', 'A');
+SELECT * FROM gv$sql_monitor WHERE :extraction_type = ('PE')
+AND sql_exec_start > TRUNC(SYSDATE) - :days;
 SPO OFF;
 HOS gzip -v gv_sql_monitor.txt
 HOS tar -rvf &&tar_filename..tar gv_sql_monitor.txt.gz
@@ -447,10 +430,11 @@ HOS rm gv_sql_monitor.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO gv$sql_plan_monitor
+PRO -> 22/26 gv$sql_plan_monitor
 SET TERM OFF;
 SPO gv_sql_plan_monitor.txt;
-SELECT * FROM gv$sql_plan_monitor WHERE :extraction_type IN ('S', 'A');
+SELECT * FROM gv$sql_plan_monitor WHERE :extraction_type = ('PE')
+AND sql_exec_start > TRUNC(SYSDATE) - :days;
 SPO OFF;
 HOS gzip -v gv_sql_plan_monitor.txt
 HOS tar -rvf &&tar_filename..tar gv_sql_plan_monitor.txt.gz
@@ -459,10 +443,11 @@ HOS rm gv_sql_plan_monitor.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO gv$sql
+PRO -> 23/26 gv$sql
 SET TERM OFF;
 SPO gv_sql.txt;
-SELECT * FROM gv$sql s WHERE :extraction_type IN ('S', 'A')
+SELECT * FROM gv$sql s WHERE :extraction_type = ('PE')
+   AND last_active_time > TRUNC(SYSDATE) - :days;
    AND NVL(INSTR(s.sql_text, '&&fields_delimiter.'), 0) = 0
    AND NVL(DBMS_LOB.instr(s.sql_fulltext, '&&fields_delimiter.'), 0) = 0;
 SPO OFF;
@@ -473,18 +458,22 @@ HOS rm gv_sql.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO gv$sql_plan_statistics_all
+PRO -> 24/26 gv$sql_plan_statistics_all
 SET TERM OFF;
 SPO gv_sql_plan_statistics_all.txt;
 WITH extracted_sql_id AS (
 SELECT /*+ materialize result_cache */
        DISTINCT inst_id, sql_id 
-  FROM gv$sql_monitor
- WHERE :extraction_type IN ('S', 'A'))
+  FROM gv$sql
+ WHERE :extraction_type = ('PE')
+   AND last_active_time > TRUNC(SYSDATE) - :days;
+   AND NVL(INSTR(s.sql_text, '&&fields_delimiter.'), 0) = 0
+   AND NVL(DBMS_LOB.instr(s.sql_fulltext, '&&fields_delimiter.'), 0) = 0)
 SELECT * 
   FROM gv$sql_plan_statistics_all s,
        extracted_sql_id m
- WHERE :extraction_type IN ('S', 'A')
+ WHERE :extraction_type = ('PE')
+   AND s.timestamp > TRUNC(SYSDATE) - :days;
    AND s.inst_id = m.inst_id
    AND s.sql_id = m.sql_id
    AND NVL(INSTR(s.filter_predicates, '&&fields_delimiter.'), 0) = 0;
@@ -496,20 +485,20 @@ HOS rm gv_sql_plan_statistics_all.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_sql_plan
+PRO -> 25/26 dba_hist_sql_plan
 SET TERM OFF;
 SPO dba_hist_sql_plan.txt;
 WITH extracted_sql_id AS (
 SELECT /*+ materialize result_cache */
-       DISTINCT dbid, sql_id 
+       DISTINCT sql_id 
   FROM dba_hist_sqlstat
- WHERE :extraction_type IN ('S', 'A')
-   AND snap_id > &&min_snap_id. )
+ WHERE :extraction_type = ('PE')
+   AND dbid = &&edb360_dbid. AND snap_id > &&min_snap_id. )
 SELECT h.* 
   FROM dba_hist_sql_plan h,
        extracted_sql_id s
- WHERE :extraction_type IN ('S', 'A')
-   AND s.dbid = h.dbid
+ WHERE :extraction_type = ('PE')
+   AND h.dbid = &&edb360_dbid.
    AND s.sql_id = h.sql_id;
 SPO OFF;
 HOS gzip -v dba_hist_sql_plan.txt
@@ -519,77 +508,17 @@ HOS rm dba_hist_sql_plan.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO dba_hist_event_histogram
+PRO -> 26/26 dba_hist_event_histogram
 SET TERM OFF;
 SPO dba_hist_event_histogram.txt;
 SELECT * 
   FROM dba_hist_event_histogram 
- WHERE :extraction_type IN ('A') 
-   AND snap_id > &&min_snap_id.;
+ WHERE :extraction_type = ('PE') 
+   AND dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.;
 SPO OFF;
 HOS gzip -v dba_hist_event_histogram.txt
 HOS tar -rvf &&tar_filename..tar dba_hist_event_histogram.txt.gz
 HOS rm dba_hist_event_histogram.txt.gz
-
-/* ------------------------------------------------------------------------- */
-
-SET TERM ON;
-PRO dba_hist_iostat_detail
-SET TERM OFF;
-SPO dba_hist_iostat_detail.txt;
-SELECT * 
-  FROM dba_hist_iostat_detail
- WHERE :extraction_type IN ('A')
-   AND snap_id > &&min_snap_id.;
-SPO OFF;
-HOS gzip -v dba_hist_iostat_detail.txt
-HOS tar -rvf &&tar_filename..tar dba_hist_iostat_detail.txt.gz
-HOS rm dba_hist_iostat_detail.txt.gz
-
-/* ------------------------------------------------------------------------- */
-
-SET TERM ON;
-PRO dba_hist_iostat_filetype
-SET TERM OFF;
-SPO dba_hist_iostat_filetype.txt;
-SELECT * 
-  FROM dba_hist_iostat_filetype
- WHERE :extraction_type IN ('A')
-   AND snap_id > &&min_snap_id.;
-SPO OFF;
-HOS gzip -v dba_hist_iostat_filetype.txt
-HOS tar -rvf &&tar_filename..tar dba_hist_iostat_filetype.txt.gz
-HOS rm dba_hist_iostat_filetype.txt.gz
-
-/* ------------------------------------------------------------------------- */
-
-SET TERM ON;
-PRO dba_hist_iostat_function
-SET TERM OFF;
-SPO dba_hist_iostat_function.txt;
-SELECT * 
-  FROM dba_hist_iostat_function
- WHERE :extraction_type IN ('A')
-   AND snap_id > &&min_snap_id.;
-SPO OFF;
-HOS gzip -v dba_hist_iostat_function.txt
-HOS tar -rvf &&tar_filename..tar dba_hist_iostat_function.txt.gz
-HOS rm dba_hist_iostat_function.txt.gz
-
-/* ------------------------------------------------------------------------- */
-
-SET TERM ON;
-PRO dba_hist_sgastat
-SET TERM OFF;
-SPO dba_hist_sgastat.txt;
-SELECT * 
-  FROM dba_hist_sgastat
- WHERE :extraction_type IN ('A')
-   AND snap_id > &&min_snap_id.;
-SPO OFF;
-HOS gzip -v dba_hist_sgastat.txt
-HOS tar -rvf &&tar_filename..tar dba_hist_sgastat.txt.gz
-HOS rm dba_hist_sgastat.txt.gz
 
 /* ------------------------------------------------------------------------- */
 
