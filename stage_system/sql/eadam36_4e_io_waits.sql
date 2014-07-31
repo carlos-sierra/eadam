@@ -119,7 +119,7 @@ SELECT MIN(begin_time) begin_time,
 ';
 END;
 /
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF main_table = 'DBA_HIST_EVENT_HISTOGRAM_S';
 COL less_1_perc FOR 999990.0;
@@ -373,7 +373,7 @@ DEF title = 'User plus System I/O Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of User + System I/O Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = 'User + System I/O Waits Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', '1 = 1');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF section_name = 'I/O Waits Histogram for Top Wait Events';
 SPO &&main_report_name..html APP;
@@ -463,84 +463,84 @@ DEF title = '&&wait_class_01. "&&event_name_01." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_01. "&&event_name_01." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_01. "&&event_name_01." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_01.'') AND event_name = TRIM(''&&event_name_01.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_02. "&&event_name_02." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_02. "&&event_name_02." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_02. "&&event_name_02." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_02.'') AND event_name = TRIM(''&&event_name_02.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_03. "&&event_name_03." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_03. "&&event_name_03." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_03. "&&event_name_03." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_03.'') AND event_name = TRIM(''&&event_name_03.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_04. "&&event_name_04." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_04. "&&event_name_04." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_04. "&&event_name_04." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_04.'') AND event_name = TRIM(''&&event_name_04.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_05. "&&event_name_05." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_05. "&&event_name_05." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_05. "&&event_name_05." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_05.'') AND event_name = TRIM(''&&event_name_05.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_06. "&&event_name_06." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_06. "&&event_name_06." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_06. "&&event_name_06." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_06.'') AND event_name = TRIM(''&&event_name_06.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_07. "&&event_name_07." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_07. "&&event_name_07." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_07. "&&event_name_07." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_07.'') AND event_name = TRIM(''&&event_name_07.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_08. "&&event_name_08." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_08. "&&event_name_08." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_08. "&&event_name_08." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_08.'') AND event_name = TRIM(''&&event_name_08.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_09. "&&event_name_09." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_09. "&&event_name_09." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_09. "&&event_name_09." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_09.'') AND event_name = TRIM(''&&event_name_09.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_10. "&&event_name_10." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_10. "&&event_name_10." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_10. "&&event_name_10." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_10.'') AND event_name = TRIM(''&&event_name_10.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_11. "&&event_name_11." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_11. "&&event_name_11." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_11. "&&event_name_11." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_11.'') AND event_name = TRIM(''&&event_name_11.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = '&&wait_class_12. "&&event_name_12." Waits - Histogram for Cluster';
 DEF abstract = 'Percentage of &&wait_class_12. "&&event_name_12." Waits, taking less (or more) than N milliseconds.'
 DEF vaxis = '&&wait_class_12. "&&event_name_12." Waits - Histogram as Percent of Waits (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_12.'') AND event_name = TRIM(''&&event_name_12.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 /*****************************************************************************************/
 

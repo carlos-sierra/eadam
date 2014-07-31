@@ -124,8 +124,13 @@ CREATE TABLE dba_hist_xtr_control_e (
   MISSING FIELD VALUES ARE NULL
   REJECT ROWS WITH ALL NULL FIELDS
 ) LOCATION ('dba_hist_xtr_control.txt')
-);
+)
+/
+
 EXEC DBMS_STATS.LOCK_TABLE_STATS(USER, 'dba_hist_xtr_control_e');
+
+SELECT * FROM dba_hist_xtr_control_e
+/
 
 /* ------------------------------------------------------------------------- */
 
@@ -149,11 +154,17 @@ CREATE TABLE dba_tab_columns_e (
   MISSING FIELD VALUES ARE NULL
   REJECT ROWS WITH ALL NULL FIELDS
 ) LOCATION ('dba_tab_columns.txt')
-);
+)
+/
+
 EXEC DBMS_STATS.LOCK_TABLE_STATS(USER, 'dba_tab_columns_e');
+
+SELECT COUNT(*) FROM dba_tab_columns_e
+/
 
 /* ------------------------------------------------------------------------- */
 
+ALTER SESSION ENABLE PARALLEL QUERY;
 DELETE sql_log;
 PRO creating external tables
 SET SERVEROUT ON;
@@ -162,6 +173,7 @@ DECLARE
   l_sql VARCHAR2(32767);
   l_error VARCHAR2(4000);
   l_table_name VARCHAR2(30);
+  l_count NUMBER;
 BEGIN
   FOR i IN (SELECT DISTINCT table_name FROM dba_tab_columns_e ORDER BY table_name)
   LOOP
@@ -199,6 +211,8 @@ BEGIN
     INSERT INTO sql_log VALUES (l_sql);
     BEGIN
       EXECUTE IMMEDIATE l_sql;
+      EXECUTE IMMEDIATE 'SELECT /*+ PARALLEL(4) */ COUNT(*) FROM '||TRIM(LOWER(SUBSTR(l_table_name, 1, 25)))||'_e' INTO l_count;
+      DBMS_OUTPUT.PUT_LINE(TO_CHAR(l_count, '999,999,999,990')||' '||TRIM(LOWER(SUBSTR(l_table_name, 1, 25)))||'_e');
     EXCEPTION
       WHEN OTHERS THEN
         l_error := SQLERRM;

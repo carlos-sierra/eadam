@@ -397,7 +397,7 @@ PRO -> 20/26 dba_hist_sqltext
 SET TERM OFF;
 SPO dba_hist_sqltext.txt;
 WITH extracted_sql_id AS (
-SELECT /*+ materialize result_cache */
+SELECT /*+ materialize no_merge */
        DISTINCT sql_id 
   FROM dba_hist_sqlstat
  WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id. 
@@ -446,10 +446,9 @@ SET TERM ON;
 PRO -> 23/26 gv$sql
 SET TERM OFF;
 SPO gv_sql.txt;
-SELECT * FROM gv$sql s WHERE :extraction_type = ('PE')
-   AND last_active_time > TRUNC(SYSDATE) - :days;
-   AND NVL(INSTR(s.sql_text, '&&fields_delimiter.'), 0) = 0
-   AND NVL(DBMS_LOB.instr(s.sql_fulltext, '&&fields_delimiter.'), 0) = 0;
+SELECT * FROM gv$sql WHERE :extraction_type = ('PE')
+   AND last_active_time > TRUNC(SYSDATE) - :days
+   AND (sql_fulltext IS NULL OR DBMS_LOB.instr(sql_fulltext, '&&fields_delimiter.') = 0);
 SPO OFF;
 HOS gzip -v gv_sql.txt
 HOS tar -rvf &&tar_filename..tar gv_sql.txt.gz
@@ -461,22 +460,9 @@ SET TERM ON;
 PRO -> 24/26 gv$sql_plan_statistics_all
 SET TERM OFF;
 SPO gv_sql_plan_statistics_all.txt;
-WITH extracted_sql_id AS (
-SELECT /*+ materialize result_cache */
-       DISTINCT inst_id, sql_id 
-  FROM gv$sql
- WHERE :extraction_type = ('PE')
-   AND last_active_time > TRUNC(SYSDATE) - :days;
-   AND NVL(INSTR(s.sql_text, '&&fields_delimiter.'), 0) = 0
-   AND NVL(DBMS_LOB.instr(s.sql_fulltext, '&&fields_delimiter.'), 0) = 0)
-SELECT * 
-  FROM gv$sql_plan_statistics_all s,
-       extracted_sql_id m
- WHERE :extraction_type = ('PE')
-   AND s.timestamp > TRUNC(SYSDATE) - :days;
-   AND s.inst_id = m.inst_id
-   AND s.sql_id = m.sql_id
-   AND NVL(INSTR(s.filter_predicates, '&&fields_delimiter.'), 0) = 0;
+SELECT * FROM gv$sql_plan_statistics_all WHERE :extraction_type = ('PE')
+   AND timestamp > TRUNC(SYSDATE) - :days;
+   AND (filter_predicates IS NULL OR INSTR(filter_predicates, '&&fields_delimiter.') = 0);
 SPO OFF;
 HOS gzip -v gv_sql_plan_statistics_all.txt
 HOS tar -rvf &&tar_filename..tar gv_sql_plan_statistics_all.txt.gz
@@ -489,7 +475,7 @@ PRO -> 25/26 dba_hist_sql_plan
 SET TERM OFF;
 SPO dba_hist_sql_plan.txt;
 WITH extracted_sql_id AS (
-SELECT /*+ materialize result_cache */
+SELECT /*+ materialize no_merge */
        DISTINCT sql_id 
   FROM dba_hist_sqlstat
  WHERE :extraction_type = ('PE')

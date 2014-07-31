@@ -390,79 +390,79 @@ DEF skip_lch = '';
 DEF title = 'AAS Waiting on Administrative per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Administrative''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_administrative');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Application per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Application''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_application');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Cluster per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Cluster''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_cluster');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Commit per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Commit''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_commit');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Concurrency per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Concurrency''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_concurrency');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Configuration per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Configuration''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_configuration');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Idle per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Idle''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_idle');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Network per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Network''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_network');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Other per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Other''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_other');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Queueing per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Queueing''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_queueing');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on Scheduler per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''Scheduler''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_scheduler');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on System IO per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''System I/O''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_system_io');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on User IO per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = ''User I/O''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_user_io');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF section_name = 'Active Session History (ASH) on CPU and Top Wait Events';
 SPO &&main_report_name..html APP;
@@ -608,12 +608,12 @@ DEF abstract = 'Average Active Sessions (AAS) on CPU'
 DEF vaxis = 'Average Active Sessions (AAS) on CPU (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'session_state = ''ON CPU''');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS on CPU per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.session_state = ''ON CPU''');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_01. "&&event_name_01." per Instance';
@@ -621,12 +621,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_01. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_01. "&&event_name_01." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_01.'') AND event = TRIM(''&&event_name_01.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_01. "&&event_name_01." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_01.'') AND h.event = TRIM(''&&event_name_01.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_02. "&&event_name_02." per Instance';
@@ -634,12 +634,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_02. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_02. "&&event_name_02." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_02.'') AND event = TRIM(''&&event_name_02.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_02. "&&event_name_02." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_02.'') AND h.event = TRIM(''&&event_name_02.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_03. "&&event_name_03." per Instance';
@@ -647,12 +647,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_03. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_03. "&&event_name_03." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_03.'') AND event = TRIM(''&&event_name_03.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_03. "&&event_name_03." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_03.'') AND h.event = TRIM(''&&event_name_03.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_04. "&&event_name_04." per Instance';
@@ -660,12 +660,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_04. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_04. "&&event_name_04." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_04.'') AND event = TRIM(''&&event_name_04.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_04. "&&event_name_04." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_04.'') AND h.event = TRIM(''&&event_name_04.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_05. "&&event_name_05." per Instance';
@@ -673,12 +673,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_05. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_05. "&&event_name_05." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_05.'') AND event = TRIM(''&&event_name_05.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_05. "&&event_name_05." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_05.'') AND h.event = TRIM(''&&event_name_05.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_06. "&&event_name_06." per Instance';
@@ -686,12 +686,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_06. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_06. "&&event_name_06." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_06.'') AND event = TRIM(''&&event_name_06.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_06. "&&event_name_06." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_06.'') AND h.event = TRIM(''&&event_name_06.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_07. "&&event_name_07." per Instance';
@@ -699,12 +699,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_07. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_07. "&&event_name_07." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_07.'') AND event = TRIM(''&&event_name_07.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_07. "&&event_name_07." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_07.'') AND h.event = TRIM(''&&event_name_07.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_08. "&&event_name_08." per Instance';
@@ -712,12 +712,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_08. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_08. "&&event_name_08." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_08.'') AND event = TRIM(''&&event_name_08.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_08. "&&event_name_08." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_08.'') AND h.event = TRIM(''&&event_name_08.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_09. "&&event_name_09." per Instance';
@@ -725,12 +725,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_09. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_09. "&&event_name_09." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_09.'') AND event = TRIM(''&&event_name_09.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_09. "&&event_name_09." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_09.'') AND h.event = TRIM(''&&event_name_09.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_10. "&&event_name_10." per Instance';
@@ -738,12 +738,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_10. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_10. "&&event_name_10." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_10.'') AND event = TRIM(''&&event_name_10.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_10. "&&event_name_10." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_10.'') AND h.event = TRIM(''&&event_name_10.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_11. "&&event_name_11." per Instance';
@@ -751,12 +751,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_11. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_11. "&&event_name_11." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_11.'') AND event = TRIM(''&&event_name_11.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_11. "&&event_name_11." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_11.'') AND h.event = TRIM(''&&event_name_11.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'AAS Waiting on &&wait_class_12. "&&event_name_12." per Instance';
@@ -764,12 +764,12 @@ DEF abstract = 'Average Active Sessions (AAS) Waiting on &&wait_class_12. "&&eve
 DEF vaxis = 'Average Active Sessions (AAS) Waiting on &&wait_class_12. "&&event_name_12." (stacked)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@filter_predicate@', 'wait_class = TRIM(''&&wait_class_12.'') AND event = TRIM(''&&event_name_12.'')');
 EXEC :sql_text := REPLACE(:sql_text, '@column_name@', 'aas_total');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_pch = '';
 DEF title = 'AAS Waiting on &&wait_class_12. "&&event_name_12." per Source';
 EXEC :sql_text := REPLACE(:sql_text_backup2, '@filter_predicate@', 'h.wait_class = TRIM(''&&wait_class_12.'') AND h.event = TRIM(''&&event_name_12.'')');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 /*****************************************************************************************/
 

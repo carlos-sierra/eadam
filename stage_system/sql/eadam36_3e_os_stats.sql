@@ -137,63 +137,63 @@ DEF skip_lch = '';
 DEF skip_all = '&&is_single_instance.';
 DEF title = 'CPU Time Percent for Cluster';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', 'instance_number');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1 AND instance_number = 1;
 DEF title = 'CPU Time Percent for Instance 1';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '1');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1 AND instance_number = 2;
 DEF title = 'CPU Time Percent for Instance 2';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '2');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1 AND instance_number = 3;
 DEF title = 'CPU Time Percent for Instance 3';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '3');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1 AND instance_number = 4;
 DEF title = 'CPU Time Percent for Instance 4';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '4');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1 AND instance_number = 5;
 DEF title = 'CPU Time Percent for Instance 5';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '5');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1 AND instance_number = 6;
 DEF title = 'CPU Time Percent for Instance 6';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '6');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1 AND instance_number = 7;
 DEF title = 'CPU Time Percent for Instance 7';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '7');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF skip_all = 'Y';
 SELECT NULL skip_all FROM dba_hist_database_instanc_s WHERE eadam_seq_id = &&eadam_seq_id. AND ROWNUM = 1 AND instance_number = 8;
 DEF title = 'CPU Time Percent for Instance 8';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@instance_number@', '8');
-@@&&skip_all.&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_all.&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU Load for Cluster';
@@ -386,42 +386,42 @@ END;
 DEF skip_lch = '';
 DEF title = 'CPU Idle Time Percent per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'idle_time');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU Busy Time Percent per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'busy_time');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU User Time Percent per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'user_time');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU Nice Time Percent per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'nice_time');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU Sys Time Percent per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'sys_time');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'OS CPU Wait Time Percent per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'os_cpu_wait_time');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'Resource Manager (RM) CPU Wait Time Percent per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'rsrc_mgr_cpu_wait_time');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU IO Wait Time Percent per Instance';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@', 'iowait_time');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'CPU Load per Instance';
@@ -429,7 +429,7 @@ DEF vaxis = 'Load';
 DEF vbaseline = 'baseline:&&avg_cpu_count.,';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@_perc', 'load');
 EXEC :sql_text := REPLACE(:sql_text, '@stat_name@', 'load');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 COL inst_01 FOR 999999999999990;
 COL inst_02 FOR 999999999999990;
@@ -446,14 +446,14 @@ DEF vaxis = 'Virtual Memory Pages IN (Bytes)';
 DEF vbaseline = '';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@_perc', 'vm_in_bytes');
 EXEC :sql_text := REPLACE(:sql_text, '@stat_name@', 'vm_in_bytes');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 DEF skip_lch = '';
 DEF title = 'Virtual Memory (VM) Pages OUT per Instance';
 DEF vaxis = 'Virtual Memory Pages OUT (Bytes)';
 EXEC :sql_text := REPLACE(:sql_text_backup, '@stat_name@_perc', 'vm_out_bytes');
 EXEC :sql_text := REPLACE(:sql_text, '@stat_name@', 'vm_out_bytes');
-@@&&skip_diagnostics.@@&&skip_pt.eadam36_9a_pre_one.sql
+@@&&skip_diagnostics.&&skip_pt.eadam36_9a_pre_one.sql
 
 /*****************************************************************************************/
 

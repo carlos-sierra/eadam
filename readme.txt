@@ -1,4 +1,4 @@
-EADAM v1409 (2014-07-26) by Carlos Sierra
+EADAM v1409a (2014-07-31) by Carlos Sierra
 
 EADAM is a "free to use" tool to perform some data mining on AWR data extracted from
 another system. For example, extract data from Production and do AWR data mining of
@@ -19,7 +19,7 @@ Source System Steps:
 Notes:
 1. TAR file is large so place eadam script and execute extraction from directory > 10GB
 
-******************************************************************************************
+****************************************************************************************
 
 Stage System Steps:
 ~~~~~~~~~~~~~~~~~~~
@@ -40,7 +40,7 @@ Notes:
 1. load process automatically generates report, so extra reports are useful to narrow
    analysis window.
 
-******************************************************************************************
+****************************************************************************************
 
 Utilities:
 ~~~~~~~~~
@@ -51,7 +51,7 @@ Utilities:
 -- truncate eadam repository
 1) as eadam user, run @utl/eadam_16_tnk.sql
 
-******************************************************************************************
+****************************************************************************************
 
 Notes:
 ~~~~~
@@ -63,7 +63,7 @@ Notes:
    SQL> @sql/eadam36_1d_resources.sql
    SQL> @sql/eadam36_0c_post.sql
 
-******************************************************************************************
+****************************************************************************************
    
     EADAM - Enkitec's Oracle AWR Data Mining Tool
     Copyright (C) 2014  Carlos Sierra
@@ -81,4 +81,4 @@ Notes:
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-******************************************************************************************
+****************************************************************************************
