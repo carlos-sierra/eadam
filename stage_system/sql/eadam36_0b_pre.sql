@@ -165,7 +165,7 @@ COL between_dates NEW_V between_dates;
 SELECT ', between &&begin_date. and &&end_date.' between_dates FROM DUAL;
 
 -- setup
-DEF tool_vrsn = 'v1409a (2014-07-31)';
+DEF tool_vrsn = 'v1410 (2014-08-07)';
 DEF prefix = 'eadam36';
 DEF sql_trace_level = '8';
 DEF main_table = '';
@@ -177,8 +177,8 @@ DEF main_report_name = '0001_&&common_prefix._index';
 DEF eadam36_log = '0002_&&common_prefix._log';
 DEF eadam36_tkprof = '0003_&&common_prefix._tkprof';
 DEF main_compressed_filename = '&&common_prefix._&&host_name_short.';
-DEF eadam36_log2 = '0004_&&main_compressed_filename._&&file_creation_time.';
-DEF eadam36_tracefile_identifier = '&&main_compressed_filename._&&file_creation_time.';
+DEF eadam36_log2 = '0004_&&common_prefix._log2';
+DEF eadam36_tracefile_identifier = '&&common_prefix.';
 DEF copyright = ' (c) 2014';
 DEF top_level_hints = 'NO_MERGE PARALLEL(4)';
 DEF sq_fact_hints = 'MATERIALIZE NO_MERGE PARALLEL(4)';

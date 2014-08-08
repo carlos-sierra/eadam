@@ -1,4 +1,4 @@
-EADAM v1409a (2014-07-31) by Carlos Sierra
+EADAM v1410 (2014-08-07) by Carlos Sierra
 
 EADAM is a "free to use" tool to perform some data mining on AWR data extracted from
 another system. For example, extract data from Production and do AWR data mining of
