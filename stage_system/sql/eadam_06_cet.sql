@@ -98,11 +98,14 @@ DEF fields_delimiter = '<,>';
 
 PRO Connecting as &&eadam_user.
 CONN &&eadam_user./&&eadam_pwd.;
+
+DROP TABLE dba_hist_xtr_control_e;
+DROP TABLE dba_tab_columns_e;
+
 WHENEVER SQLERROR EXIT SQL.SQLCODE;
 
 /* ------------------------------------------------------------------------- */
 
-DROP TABLE dba_hist_xtr_control_e;
 CREATE TABLE dba_hist_xtr_control_e (
   dbid            VARCHAR2(4000),
   dbname          VARCHAR2(4000),
@@ -134,7 +137,6 @@ SELECT * FROM dba_hist_xtr_control_e
 
 /* ------------------------------------------------------------------------- */
 
-DROP TABLE dba_tab_columns_e;
 CREATE TABLE dba_tab_columns_e (
   table_name     VARCHAR2(4000),
   column_id      VARCHAR2(4000),

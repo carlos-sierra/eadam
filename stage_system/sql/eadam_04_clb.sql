@@ -39,7 +39,7 @@ CREATE OR REPLACE TYPE cpu_demand_type AS OBJECT
 )
 /
 
-CREATE OR REPLACE TYPE cpu_demand_type_table AS TABLE of cpu_demand_type
+CREATE OR REPLACE TYPE cpu_demand_type_table AS TABLE OF cpu_demand_type
 /
 
 CREATE OR REPLACE TYPE cpu_demand_mm_type AS OBJECT 
@@ -65,7 +65,7 @@ CREATE OR REPLACE TYPE cpu_demand_mm_type AS OBJECT
 )
 /
 
-CREATE OR REPLACE TYPE cpu_demand_mm_type_table AS TABLE of cpu_demand_mm_type
+CREATE OR REPLACE TYPE cpu_demand_mm_type_table AS TABLE OF cpu_demand_mm_type
 /
 
 CREATE OR REPLACE TYPE cpu_consumption_type AS OBJECT 
@@ -85,7 +85,7 @@ CREATE OR REPLACE TYPE cpu_consumption_type AS OBJECT
 )
 /
 
-CREATE OR REPLACE TYPE cpu_consumption_type_table AS TABLE of cpu_consumption_type
+CREATE OR REPLACE TYPE cpu_consumption_type_table AS TABLE OF cpu_consumption_type
 /
 
 CREATE OR REPLACE TYPE memory_usage_type AS OBJECT 
@@ -105,7 +105,7 @@ CREATE OR REPLACE TYPE memory_usage_type AS OBJECT
 )
 /
 
-CREATE OR REPLACE TYPE memory_usage_type_table AS TABLE of memory_usage_type
+CREATE OR REPLACE TYPE memory_usage_type_table AS TABLE OF memory_usage_type
 /
 
 CREATE OR REPLACE TYPE iops_type AS OBJECT 
@@ -125,7 +125,7 @@ CREATE OR REPLACE TYPE iops_type AS OBJECT
 )
 /
 
-CREATE OR REPLACE TYPE iops_type_table AS TABLE of iops_type
+CREATE OR REPLACE TYPE iops_type_table AS TABLE OF iops_type
 /
 
 CREATE OR REPLACE TYPE mbps_type AS OBJECT 
@@ -145,7 +145,7 @@ CREATE OR REPLACE TYPE mbps_type AS OBJECT
 )
 /
 
-CREATE OR REPLACE TYPE mbps_type_table AS TABLE of mbps_type
+CREATE OR REPLACE TYPE mbps_type_table AS TABLE OF mbps_type
 /
 
 /* ------------------------------------------------------------------------- */
@@ -332,7 +332,7 @@ BEGIN
               FROM dba_hist_sql_plan_s
              WHERE eadam_seq_id = p_eadam_seq_id
                AND row_num > l_row_num
-               AND row_num < l_row_num + 1000 -- max of 255,000 bytes are considered
+               AND row_num < l_row_num + 1000 -- max OF 255,000 bytes are considered
                AND sql_id IS NULL -- continuation line
                AND other_xml IS NOT NULL
              ORDER BY
@@ -380,7 +380,7 @@ BEGIN
               FROM gv_sql_plan_statistics_al_s
              WHERE eadam_seq_id = p_eadam_seq_id
                AND row_num > l_row_num
-               AND row_num < l_row_num + 1000 -- max of 255,000 bytes are considered
+               AND row_num < l_row_num + 1000 -- max OF 255,000 bytes are considered
                AND sql_id IS NULL -- continuation line
                AND other_xml IS NOT NULL
              ORDER BY
