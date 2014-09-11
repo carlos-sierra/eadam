@@ -67,7 +67,9 @@ SPO OFF;
 @@eadam36_4b_pga_stats.sql
 @@eadam36_4c_mem_stats.sql
 @@eadam36_4d_time_model.sql
-@@&&skip_10g.eadam36_4e_io_waits.sql
+@@eadam36_4e_time_model_comp.sql
+@@&&skip_10g.eadam36_4f_io_waits.sql
+@@&&skip_10g.eadam36_4g_io_waits_top.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -80,6 +82,8 @@ PRO
 SPO OFF;
 
 @@eadam36_5a_ash.sql
+@@eadam36_5b_ash_wait.sql
+@@eadam36_5c_ash_top.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -91,7 +95,11 @@ PRO </td><td>
 PRO
 SPO OFF;
 
-@@eadam36_6a_ash_top.sql
+@@eadam36_6a_ash_event.sql
+@@eadam36_6b_ash_sql.sql
+@@eadam36_6c_ash_programs.sql
+@@eadam36_6d_ash_modules.sql
+@@eadam36_6e_ash_users.sql
 
 PRO ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

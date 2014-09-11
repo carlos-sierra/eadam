@@ -10,13 +10,13 @@
 SET TERM ON ECHO OFF;
 CL COL;
 PRO
-PRO Parameter 1: (default 100)
+PRO Parameter 1: (default 100) recommended: 100
 PRO Days to extract 
 PRO
 DEF days = '&1';
 PRO
 PRO
-PRO Parameter 2: (default PE)
+PRO Parameter 2: (default PE) recommended: PE
 PRO Extraction Type [ Performance Evaluation (PE) | Sizing and Provisioning (SP) ] 
 PRO
 DEF extraction_type = '&2';
