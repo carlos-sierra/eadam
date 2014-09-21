@@ -20,5 +20,5 @@
 @@sql/eadam_06_cet.sql
 @@sql/eadam_07_lso.sql
 -- report
-@@sql/eadam36_0b_pre.sql &&eadam_seq_id. 2013-08-01/00:00 2034-12-31/23:59
-@@sql/eadam36_0a_main.sql
+--@@sql/eadam36_0b_pre.sql &&eadam_seq_id. 2013-08-01/00:00 2034-12-31/23:59
+--@@sql/eadam36_0a_main.sql

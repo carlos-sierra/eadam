@@ -526,6 +526,70 @@ END;
 
 /*****************************************************************************************/
 
+DEF main_table = 'DBA_HIST_TBSPC_SPACE_USAGE';
+DEF chartype = 'LineChart';
+DEF stacked = '';
+DEF vbaseline = '';
+DEF vaxis = 'Tablespace Size in Giga Bytes (GB)';
+DEF tit_01 = 'Total (Perm + Undo + Temp)';
+DEF tit_02 = 'Permanent';
+DEF tit_03 = 'Undo';
+DEF tit_04 = 'Temporary';
+DEF tit_05 = '';
+DEF tit_06 = '';
+DEF tit_07 = '';
+DEF tit_08 = '';
+DEF tit_09 = '';
+DEF tit_10 = '';
+DEF tit_11 = '';
+DEF tit_12 = '';
+DEF tit_13 = '';
+DEF tit_14 = '';
+DEF tit_15 = '';
+
+BEGIN
+  :sql_text := '
+SELECT begin_time,
+       end_time,
+       SUM(perm_gb) + SUM(undo_gb) + SUM(temp_gb) total_gb,
+       SUM(perm_gb) perm_gb,
+       SUM(undo_gb) undo_gb,
+       SUM(temp_gb) temp_gb,
+       0 dummy_05,
+       0 dummy_06,
+       0 dummy_07,
+       0 dummy_08,
+       0 dummy_09,
+       0 dummy_10,
+       0 dummy_11,
+       0 dummy_12,
+       0 dummy_13,
+       0 dummy_14,
+       0 dummy_15
+  FROM disk_space_series_v
+ WHERE eadam_seq_id = &&eadam_seq_id.
+   AND begin_time BETWEEN TO_DATE(''&&begin_date.'',''YYYY-MM-DD/HH24:MI'') AND TO_DATE(''&&end_date.'',''YYYY-MM-DD/HH24:MI'') + (1/24/60)
+ GROUP BY
+       begin_time,
+       end_time
+ ORDER BY
+       end_time
+';
+END;
+/
+
+DEF skip_lch = '';
+DEF skip_all = '&&is_single_instance.';
+DEF title = 'Tablespace Size Series';
+@@&&skip_all.&&skip_diagnostics.eadam36_9a_pre_one.sql
+
+/*****************************************************************************************/
+
+DEF skip_lch = 'Y';
+DEF skip_pch = 'Y';
+
+/*****************************************************************************************/
+
 DEF title = 'IOPS and MBPS';
 DEF main_table = 'DBA_HIST_SYSSTAT_S';
 DEF abstract = 'I/O Operations per Second (IOPS) and I/O Mega Bytes per Second (MBPS). Includes Peak (max), percentiles and average for read (R), write (W) and read+write (RW) operations.'

@@ -17,6 +17,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *****************************************************************************************/
+@@sql/eadam_01_cur.sql
 @@sql/eadam_02_cso.sql
 @@sql/eadam_04_clb.sql
 @@sql/eadam_05_cvw.sql

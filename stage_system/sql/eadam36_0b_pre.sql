@@ -165,7 +165,7 @@ COL between_dates NEW_V between_dates;
 SELECT ', between &&begin_date. and &&end_date.' between_dates FROM DUAL;
 
 -- setup
-DEF tool_vrsn = 'v1412 (2014-09-11)';
+DEF tool_vrsn = 'v1412 (2014-09-20)';
 DEF prefix = 'eadam36';
 DEF sql_trace_level = '8';
 DEF main_table = '';

@@ -62,7 +62,7 @@ BEGIN
   END IF;
   DBMS_LOB.createtemporary(l_other_xml, TRUE, DBMS_LOB.call);
   DBMS_LOB.append(l_other_xml, l_other_xml_2);
-  FOR i IN (SELECT /*+ PARALLEL(4) */ other_xml
+  FOR i IN (SELECT other_xml
               FROM dba_hist_sql_plan_s
              WHERE eadam_seq_id = p_eadam_seq_id
                AND row_num > l_row_num
@@ -95,7 +95,7 @@ RETURN CLOB IS
   l_other_xml CLOB;
   l_other_xml_2 CLOB;
 BEGIN
-  SELECT /*+ PARALLEL(4) */ row_num, other_xml 
+  SELECT row_num, other_xml 
     INTO l_row_num, l_other_xml_2 
     FROM gv_sql_plan_statistics_al_s
    WHERE eadam_seq_id = p_eadam_seq_id
@@ -110,7 +110,7 @@ BEGIN
   END IF;
   DBMS_LOB.createtemporary(l_other_xml, TRUE, DBMS_LOB.call);
   DBMS_LOB.append(l_other_xml, l_other_xml_2);
-  FOR i IN (SELECT /*+ PARALLEL(4) */ other_xml
+  FOR i IN (SELECT other_xml
               FROM gv_sql_plan_statistics_al_s
              WHERE eadam_seq_id = p_eadam_seq_id
                AND row_num > l_row_num

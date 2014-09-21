@@ -1,4 +1,4 @@
-EADAM v1412 (2014-09-11) by Carlos Sierra
+EADAM v1412 (2014-09-20) by Carlos Sierra
 
 EADAM is a "free to use" tool to perform some data mining on AWR data extracted from
 another system. For example, extract data from Production and do AWR data mining of
@@ -18,6 +18,7 @@ Source System Steps:
 
 Notes:
 1. TAR file is large so place eadam script and execute extraction from directory > 10GB
+2. To execute EADAM in all databases on host consider run_eadam.sh
 
 ****************************************************************************************
 
@@ -26,7 +27,8 @@ Stage System Steps:
 
 -- install tool on staging system
 1) unzip eadam in server and navigate to eadam/stage_system directory
-2) as SYS, run @eadam_install.sql to create staging tables, libraries and views
+2) as SYS, run @eadam_01_cur.sql to create eadam directory, user and password 
+3) as SYS, run @eadam_install.sql to create staging tables, libraries and views
  
 -- load awr data from TAR source file into staging system
 1) place TAR into eadam/stage_system directory (the one that contains this readme.txt)
@@ -34,11 +36,7 @@ Stage System Steps:
 
 -- produce report (after loading awr data from TAR file as described above)
 1) navigate to eadam/stage_system directory (the one that contains this readme.txt)
-2) as SYS or eadam user, run @eadam_report.sql to create ZIP with report
-
-Notes:
-1. load process automatically generates report, so extra reports are useful to narrow
-   analysis window.
+2) as eadam user, run @eadam_report.sql to create ZIP with report
 
 ****************************************************************************************
 

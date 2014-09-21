@@ -17,9 +17,6 @@ ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_DATE_FORMAT = '&&date_mask.';
 ALTER SESSION SET NLS_TIMESTAMP_FORMAT = '&&timestamp_mask.';
 
-ALTER SESSION FORCE PARALLEL QUERY PARALLEL 4;
-ALTER SESSION FORCE PARALLEL DML PARALLEL 4;
-
 VAR eadam_seq_id NUMBER;
 EXEC :eadam_seq_id := TO_NUMBER('&&eadam_seq_id.');
 
@@ -57,8 +54,8 @@ BEGIN
       l_cols_e := l_cols_e||', TRIM('||TRIM(j.column_name)||')'||CHR(10);
     END LOOP;
     l_cols_s := l_cols_s||')'||CHR(10);
-    l_sql := 'INSERT /*+ APPEND PARALLEL(4) */ INTO '||LOWER(i.s_table_name)||CHR(10)||l_cols_s||
-             'SELECT /*+ PARALLEL(4) */ '||CHR(10)||l_cols_e||'FROM '||LOWER(i.e_table_name);
+    l_sql := 'INSERT INTO '||LOWER(i.s_table_name)||CHR(10)||l_cols_s||
+             'SELECT '||CHR(10)||l_cols_e||'FROM '||LOWER(i.e_table_name);
     INSERT INTO sql_log VALUES (l_sql);
     BEGIN
       EXECUTE IMMEDIATE l_sql USING IN :eadam_seq_id;
@@ -99,6 +96,6 @@ SELECT eadam_seq_id seq,
 
 /* ------------------------------------------------------------------------- */
 
-HOS rm -f v_*.log v_*.txt gv_*.log gv_*.txt dba_hist_*.log dba_hist_*.txt dba_tab_columns.log dba_tab_columns.txt
+HOS rm -f v_*.log v_*.txt gv_*.log gv_*.txt dba_*.log dba_*.txt
 SET ECHO OFF FEED OFF;
 SPO OFF;

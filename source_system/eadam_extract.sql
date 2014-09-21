@@ -4,8 +4,8 @@
 -- extraction types: PT (Performance Evaluation) or SP (Sizing and Provisioning)
 -- Sizing and Provisioning (SP) is a subset of Performance Evaluation (PE)
 -- Default parameter values are 100 days of history, and PE for extraction type
--- This scripts extracts data from DBA_HIST views, which are part of the
--- Oracle Diagnostics Pack. Same about ASH views.
+-- This scripts extracts data from DBA_HIST and ASH views, which are part of the
+-- Oracle Diagnostics Pack.
 
 SET TERM ON ECHO OFF;
 CL COL;
@@ -85,7 +85,7 @@ SELECT dbid edb360_dbid FROM v$database;
 SET TERM OFF ECHO OFF DEF ON FEED OFF FLU OFF HEA OFF NUM 30 LIN 32767 LONG 4000000 LONGC 4000 NEWP NONE PAGES 0 SHOW OFF SQLC MIX TAB OFF TRIMS ON VER OFF TIM OFF TIMI OFF ARRAY 100 SQLP SQL> BLO . RECSEP OFF COLSEP '&&fields_delimiter.';
 
 SET TERM ON;
-PRO -> 1/26 dba_hist_xtr_control
+PRO -> 1/29 dba_hist_xtr_control
 SET TERM OFF;
 SPO dba_hist_xtr_control.txt;
 SELECT d.dbid, d.name dbname, d.db_unique_name, d.platform_name,
@@ -101,7 +101,7 @@ HOS rm dba_hist_xtr_control.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 2/26 dba_tab_columns
+PRO -> 2/29 dba_tab_columns
 SET TERM OFF;
 SPO dba_tab_columns.txt;
 SELECT table_name,
@@ -128,6 +128,8 @@ SELECT table_name,
 ,'DBA_HIST_SQLTEXT'             /* PE */ 
 ,'DBA_HIST_SYS_TIME_MODEL'
 ,'DBA_HIST_SYSSTAT'
+,'DBA_HIST_TBSPC_SPACE_USAGE'
+,'DBA_TABLESPACES'
 ,'GV_$ACTIVE_SESSION_HISTORY'
 ,'GV_$LOG'
 ,'GV_$SQL_MONITOR'              /* PE */
@@ -137,6 +139,7 @@ SELECT table_name,
 ,'GV_$SYSTEM_PARAMETER2'
 ,'V_$CONTROLFILE'
 ,'V_$DATAFILE'                  
+,'V_$TABLESPACE'
 ,'V_$TEMPFILE'
 );
 SPO OFF;
@@ -147,7 +150,7 @@ HOS rm dba_tab_columns.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 3/26 v$datafile
+PRO -> 3/29 v$datafile
 SET TERM OFF;
 SPO v_datafile.txt;
 SELECT * FROM v$datafile;
@@ -159,7 +162,7 @@ HOS rm v_datafile.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 4/26 v$tempfile
+PRO -> 4/29 v$tempfile
 SET TERM OFF;
 SPO v_tempfile.txt;
 SELECT * FROM v$tempfile;
@@ -171,7 +174,7 @@ HOS rm v_tempfile.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 5/26 v$controlfile
+PRO -> 5/29 v$controlfile
 SET TERM OFF;
 SPO v_controlfile.txt;
 SELECT * FROM v$controlfile;
@@ -183,7 +186,19 @@ HOS rm v_controlfile.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 6/26 gv$log
+PRO -> 6/29 v$tablespace
+SET TERM OFF;
+SPO v_tablespace.txt;
+SELECT * FROM v$tablespace;
+SPO OFF;
+HOS gzip -v v_tablespace.txt
+HOS tar -rvf &&tar_filename..tar v_tablespace.txt.gz
+HOS rm v_tablespace.txt.gz
+
+/* ------------------------------------------------------------------------- */
+
+SET TERM ON;
+PRO -> 7/29 gv$log
 SET TERM OFF;
 SPO gv_log.txt;
 SELECT * FROM gv$log;
@@ -195,7 +210,19 @@ HOS rm gv_log.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 7/26 dba_hist_snapshot
+PRO -> 8/29 dba_tablespaces
+SET TERM OFF;
+SPO dba_tablespaces.txt;
+SELECT * FROM dba_tablespaces;
+SPO OFF;
+HOS gzip -v dba_tablespaces.txt
+HOS tar -rvf &&tar_filename..tar dba_tablespaces.txt.gz
+HOS rm dba_tablespaces.txt.gz
+
+/* ------------------------------------------------------------------------- */
+
+SET TERM ON;
+PRO -> 9/29 dba_hist_snapshot
 SET TERM OFF;
 SPO dba_hist_snapshot.txt;
 SELECT * FROM dba_hist_snapshot 
@@ -208,7 +235,7 @@ HOS rm dba_hist_snapshot.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 8/26 dba_hist_pgastat
+PRO -> 10/29 dba_hist_pgastat
 SET TERM OFF;
 SPO dba_hist_pgastat.txt;
 SELECT * FROM dba_hist_pgastat 
@@ -221,7 +248,7 @@ HOS rm dba_hist_pgastat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 9/26 dba_hist_sgastat
+PRO -> 11/29 dba_hist_sgastat
 SET TERM OFF;
 SPO dba_hist_sgastat.txt;
 SELECT * FROM dba_hist_sgastat 
@@ -234,7 +261,7 @@ HOS rm dba_hist_sgastat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 10/26 dba_hist_sysstat
+PRO -> 12/29 dba_hist_sysstat
 SET TERM OFF;
 SPO dba_hist_sysstat.txt;
 SELECT * FROM dba_hist_sysstat 
@@ -247,7 +274,7 @@ HOS rm dba_hist_sysstat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 11/26 dba_hist_sga
+PRO -> 13/29 dba_hist_sga
 SET TERM OFF;
 SPO dba_hist_sga.txt;
 SELECT * FROM dba_hist_sga 
@@ -260,7 +287,7 @@ HOS rm dba_hist_sga.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 12/26 dba_hist_database_instance
+PRO -> 14/29 dba_hist_database_instance
 SET TERM OFF;
 SPO dba_hist_database_instance.txt;
 SELECT * FROM dba_hist_database_instance
@@ -273,7 +300,7 @@ HOS rm dba_hist_database_instance.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 13/26 gv$active_session_history
+PRO -> 15/29 gv$active_session_history
 SET TERM OFF;
 SPO gv_active_session_history.txt;
 SELECT * FROM gv$active_session_history
@@ -291,7 +318,7 @@ HOS rm gv_active_session_history.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 14/26 gv$system_parameter2
+PRO -> 16/29 gv$system_parameter2
 SET TERM OFF;
 SPO gv_system_parameter2.txt;
 SELECT * FROM gv$system_parameter2
@@ -309,7 +336,7 @@ HOS rm gv_system_parameter2.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 15/26 dba_hist_active_sess_history
+PRO -> 17/29 dba_hist_active_sess_history
 SET TERM OFF;
 SPO dba_hist_active_sess_history.txt;
 SELECT * FROM dba_hist_active_sess_history 
@@ -327,7 +354,7 @@ HOS rm dba_hist_active_sess_history.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 16/26 dba_hist_parameter
+PRO -> 18/29 dba_hist_parameter
 SET TERM OFF;
 SPO dba_hist_parameter.txt;
 SELECT * FROM dba_hist_parameter 
@@ -347,7 +374,7 @@ HOS rm dba_hist_parameter.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 17/26 dba_hist_sys_time_model
+PRO -> 19/29 dba_hist_sys_time_model
 SET TERM OFF;
 SPO dba_hist_sys_time_model.txt;
 SELECT * FROM dba_hist_sys_time_model 
@@ -365,7 +392,20 @@ HOS rm dba_hist_sys_time_model.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 18/26 dba_hist_osstat
+PRO -> 20/29 dba_hist_tbspc_space_usage
+SET TERM OFF;
+SPO dba_hist_tbspc_space_usage.txt;
+SELECT * FROM dba_hist_tbspc_space_usage 
+WHERE dbid = &&edb360_dbid. AND snap_id > &&min_snap_id.;
+SPO OFF;
+HOS gzip -v dba_hist_tbspc_space_usage.txt
+HOS tar -rvf &&tar_filename..tar dba_hist_tbspc_space_usage.txt.gz
+HOS rm dba_hist_tbspc_space_usage.txt.gz
+
+/* ------------------------------------------------------------------------- */
+
+SET TERM ON;
+PRO -> 21/29 dba_hist_osstat
 SET TERM OFF;
 SPO dba_hist_osstat.txt;
 SELECT * FROM dba_hist_osstat 
@@ -379,7 +419,7 @@ HOS rm dba_hist_osstat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 19/26 dba_hist_sqlstat
+PRO -> 22/29 dba_hist_sqlstat
 SET TERM OFF;
 SPO dba_hist_sqlstat.txt;
 SELECT * FROM dba_hist_sqlstat 
@@ -393,7 +433,7 @@ HOS rm dba_hist_sqlstat.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 20/26 dba_hist_sqltext
+PRO -> 23/29 dba_hist_sqltext
 SET TERM OFF;
 SPO dba_hist_sqltext.txt;
 WITH extracted_sql_id AS (
@@ -417,7 +457,7 @@ HOS rm dba_hist_sqltext.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 21/26 gv$sql_monitor
+PRO -> 24/29 gv$sql_monitor
 SET TERM OFF;
 SPO gv_sql_monitor.txt;
 SELECT * FROM gv$sql_monitor WHERE :extraction_type = ('PE')
@@ -430,7 +470,7 @@ HOS rm gv_sql_monitor.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 22/26 gv$sql_plan_monitor
+PRO -> 25/29 gv$sql_plan_monitor
 SET TERM OFF;
 SPO gv_sql_plan_monitor.txt;
 SELECT * FROM gv$sql_plan_monitor WHERE :extraction_type = ('PE')
@@ -443,7 +483,7 @@ HOS rm gv_sql_plan_monitor.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 23/26 gv$sql
+PRO -> 26/29 gv$sql
 SET TERM OFF;
 SPO gv_sql.txt;
 SELECT * FROM gv$sql WHERE :extraction_type = ('PE')
@@ -457,11 +497,11 @@ HOS rm gv_sql.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 24/26 gv$sql_plan_statistics_all
+PRO -> 27/29 gv$sql_plan_statistics_all
 SET TERM OFF;
 SPO gv_sql_plan_statistics_all.txt;
 SELECT * FROM gv$sql_plan_statistics_all WHERE :extraction_type = ('PE')
-   AND timestamp > TRUNC(SYSDATE) - :days;
+   AND timestamp > TRUNC(SYSDATE) - :days
    AND (filter_predicates IS NULL OR INSTR(filter_predicates, '&&fields_delimiter.') = 0);
 SPO OFF;
 HOS gzip -v gv_sql_plan_statistics_all.txt
@@ -471,7 +511,7 @@ HOS rm gv_sql_plan_statistics_all.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 25/26 dba_hist_sql_plan
+PRO -> 28/29 dba_hist_sql_plan
 SET TERM OFF;
 SPO dba_hist_sql_plan.txt;
 WITH extracted_sql_id AS (
@@ -494,7 +534,7 @@ HOS rm dba_hist_sql_plan.txt.gz
 /* ------------------------------------------------------------------------- */
 
 SET TERM ON;
-PRO -> 26/26 dba_hist_event_histogram
+PRO -> 29/29 dba_hist_event_histogram
 SET TERM OFF;
 SPO dba_hist_event_histogram.txt;
 SELECT * 

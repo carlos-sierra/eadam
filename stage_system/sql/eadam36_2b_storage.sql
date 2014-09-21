@@ -3,6 +3,36 @@ SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
+DEF title = 'Tablespace';
+DEF main_table = 'V_TABLESPACE_S';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM v_tablespace_s
+ WHERE eadam_seq_id = &&eadam_seq_id.
+ ORDER BY
+       ts#
+';
+END;
+/
+@@eadam36_9a_pre_one.sql
+
+DEF title = 'Tablespaces';
+DEF main_table = 'DBA_TABLESPACES_S';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+       *
+  FROM dba_tablespaces_s
+ WHERE eadam_seq_id = &&eadam_seq_id.
+ ORDER BY
+       tablespace_name
+';
+END;
+/
+@@eadam36_9a_pre_one.sql
+
 DEF title = 'Datafile';
 DEF main_table = 'V_DATAFILE_S';
 BEGIN

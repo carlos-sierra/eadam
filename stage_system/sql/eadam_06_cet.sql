@@ -1,51 +1,28 @@
 SPO eadam_06_cet.txt;
-
 PRO This script loads awr data from source into staging system
-PRO 1) place tar into eadam/stage_system directory (the one that contains the readme.txt)
-PRO 2) navigate to eadam/stage_system directory, which contains now tar file(s)
-PRO 3) as SYS, run @eadam_load.sql to create external tables, load staging tables and produce output
-PRO
+
+-- eadam/stage_system where TAR files are placed
+DEF eadam_directory = 'EADAM_DIR';
+COL directory_path NEW_V directory_path;
+SELECT directory_path FROM dba_directories WHERE directory_name = '&&eadam_directory.';
+-- grant read,write on directory to eadam
+-- HOS chmod 777 to this directory
+
+-- eadam user and pwd
+DEF eadam_user = 'eadam';
+DEF eadam_pwd = 'eadam';
 
 CONN / AS SYSDBA;
 
-SET TERM ON ECHO OFF;
-
-PRO
-PRO Current Directory path:
-HOS pwd
-PRO Parameter 1: 
-PRO Enter directory path where your TAR file should reside (eadam/stage_system directory)
-PRO Note: You may want to cut and paste "current directory path" displayed above
-PRO 
-PRO DIRECTORY_PATH:
-DEF directory_path = '&1';
-PRO
-PRO Parameter 2:
-PRO EADAM_USER:
-PRO
-DEF eadam_user = '&2';
-PRO
-PRO Parameter 3:
-PRO EADAM_PWD:
-PRO
-DEF eadam_pwd = '&3';
-PRO
-
-SET ECHO ON FEED ON;
-
-CREATE OR REPLACE DIRECTORY EADAM AS '&&directory_path.';
-GRANT READ,WRITE ON DIRECTORY EADAM TO &&eadam_user.;
-HOS chmod 777 &&directory_path.
-
 /* ------------------------------------------------------------------------- */
 
-SET ECHO OFF;
+SET TERM ON ECHO OFF;
 PRO
 PRO TAR files in Current Directory:
 HOS ls -lt eadam*.tar
-PRO Parameter 4:
+PRO Parameter 1:
 PRO TAR_FILE_NAME:
-DEF tar_file_name = '&4';
+DEF tar_file_name = '&1';
 SPO OFF;
 SPO eadam_06_cet_&&tar_file_name..txt;
 DEF
@@ -81,6 +58,8 @@ HOS gunzip -v dba_hist_sqlstat.txt.gz
 HOS gunzip -v dba_hist_sqltext.txt.gz
 HOS gunzip -v dba_hist_sys_time_model.txt.gz
 HOS gunzip -v dba_hist_sysstat.txt.gz
+HOS gunzip -v dba_hist_tbspc_space_usage.txt.gz
+HOS gunzip -v dba_tablespaces.txt.gz
 HOS gunzip -v gv_active_session_history.txt.gz
 HOS gunzip -v gv_log.txt.gz
 HOS gunzip -v gv_sql_monitor.txt.gz
@@ -90,6 +69,7 @@ HOS gunzip -v gv_sql.txt.gz
 HOS gunzip -v gv_system_parameter2.txt.gz
 HOS gunzip -v v_controlfile.txt.gz
 HOS gunzip -v v_datafile.txt.gz
+HOS gunzip -v v_tablespace.txt.gz
 HOS gunzip -v v_tempfile.txt.gz
 
 /* ------------------------------------------------------------------------- */
@@ -118,7 +98,7 @@ CREATE TABLE dba_hist_xtr_control_e (
   capture_time    VARCHAR2(4000)
 ) ORGANIZATION EXTERNAL
 ( TYPE ORACLE_LOADER
-  DEFAULT DIRECTORY EADAM
+  DEFAULT DIRECTORY &&eadam_directory.
   ACCESS PARAMETERS
 ( RECORDS DELIMITED BY 0x'0A'
   BADFILE 'dba_hist_xtr_control.bad'
@@ -147,7 +127,7 @@ CREATE TABLE dba_tab_columns_e (
   data_scale     VARCHAR2(4000)
 ) ORGANIZATION EXTERNAL
 ( TYPE ORACLE_LOADER
-  DEFAULT DIRECTORY EADAM
+  DEFAULT DIRECTORY &&eadam_directory.
   ACCESS PARAMETERS
 ( RECORDS DELIMITED BY 0x'0A'
   BADFILE 'dba_tab_columns.bad'
@@ -166,7 +146,6 @@ SELECT COUNT(*) FROM dba_tab_columns_e
 
 /* ------------------------------------------------------------------------- */
 
-ALTER SESSION ENABLE PARALLEL QUERY;
 DELETE sql_log;
 PRO creating external tables
 SET SERVEROUT ON;
@@ -198,7 +177,7 @@ BEGIN
     l_sql := 'CREATE TABLE '||TRIM(LOWER(SUBSTR(l_table_name, 1, 25)))||'_e'||l_cols||'
   ORGANIZATION EXTERNAL
 ( TYPE ORACLE_LOADER
-  DEFAULT DIRECTORY EADAM
+  DEFAULT DIRECTORY &&eadam_directory.
   ACCESS PARAMETERS
 ( RECORDS DELIMITED BY 0x''0A''
   BADFILE '''||TRIM(LOWER(l_table_name))||'.bad''
@@ -208,12 +187,11 @@ BEGIN
   REJECT ROWS WITH ALL NULL FIELDS
 ) LOCATION ('''||TRIM(LOWER(l_table_name))||'.txt'')
 )
-  PARALLEL 4
   REJECT LIMIT UNLIMITED';   
     INSERT INTO sql_log VALUES (l_sql);
     BEGIN
       EXECUTE IMMEDIATE l_sql;
-      EXECUTE IMMEDIATE 'SELECT /*+ PARALLEL(4) */ COUNT(*) FROM '||TRIM(LOWER(SUBSTR(l_table_name, 1, 25)))||'_e' INTO l_count;
+      EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM '||TRIM(LOWER(SUBSTR(l_table_name, 1, 25)))||'_e' INTO l_count;
       DBMS_OUTPUT.PUT_LINE(TO_CHAR(l_count, '999,999,999,990')||' '||TRIM(LOWER(SUBSTR(l_table_name, 1, 25)))||'_e');
     EXCEPTION
       WHEN OTHERS THEN
@@ -232,7 +210,7 @@ WHENEVER SQLERROR CONTINUE;
 
 SELECT table_name external_table FROM user_tables WHERE table_name LIKE '%_E' ORDER BY 1;
 
-UNDEF 1 2 3
+UNDEF 1
 SET ECHO OFF FEED OFF;
 SPO OFF;
 

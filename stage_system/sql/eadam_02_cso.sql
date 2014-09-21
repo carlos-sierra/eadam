@@ -4,76 +4,9 @@
 SPO eadam_02_cso.txt;
 SET ECHO ON FEED ON;
 
-CONN / AS SYSDBA;
-
-SET TERM ON ECHO OFF;
-
--- displays existing tablespaces
-WITH f AS (
-        SELECT tablespace_name, NVL(ROUND(SUM(bytes)/1024/1024), 0) free_space_mb
-          FROM (SELECT tablespace_name, SUM( bytes ) bytes 
-		          FROM sys.dba_free_space 
-				 GROUP BY tablespace_name
-                UNION ALL
-                SELECT tablespace_name, SUM( maxbytes - bytes ) bytes 
-				  FROM sys.dba_data_files 
-				 WHERE maxbytes - bytes > 0 
- 				 GROUP BY tablespace_name )
-         GROUP BY tablespace_name)
-SELECT t.tablespace_name, f.free_space_mb
-  FROM sys.dba_tablespaces t, f
-WHERE t.tablespace_name NOT IN ('SYSTEM', 'SYSAUX')
-   AND t.status = 'ONLINE'
-   AND t.contents = 'PERMANENT'
-   AND t.tablespace_name = f.tablespace_name
-   AND f.free_space_mb > 50
-ORDER BY f.free_space_mb;
-PRO
-PRO Parameter 1:
-PRO DEFAULT_TABLESPACE:
-PRO
-DEF default_tablespace = '&1';
-PRO
-SELECT t.tablespace_name
-  FROM sys.dba_tablespaces t
- WHERE t.tablespace_name NOT IN ('SYSTEM', 'SYSAUX')
-   AND t.status = 'ONLINE'
-   AND t.contents = 'TEMPORARY'
-   AND NOT EXISTS (
-SELECT NULL
-  FROM sys.dba_tablespace_groups tg
- WHERE t.tablespace_name = tg.tablespace_name )
- UNION
-SELECT tg.group_name
-  FROM sys.dba_tablespaces t,
-       sys.dba_tablespace_groups tg
- WHERE t.tablespace_name NOT IN ('SYSTEM', 'SYSAUX')
-   AND t.status = 'ONLINE'
-   AND t.contents = 'TEMPORARY'
-   AND t.tablespace_name = tg.tablespace_name;
-PRO
-PRO Parameter 2:
-PRO TEMPORARY_TABLESPACE:
-PRO
-DEF temporary_tablespace = '&2';
-PRO
-PRO Parameter 3:
-PRO EADAM_USER:
-PRO
-DEF eadam_user = '&3';
-PRO
-PRO Parameter 4:
-PRO EADAM_PWD:
-PRO
-DEF eadam_pwd = '&4';
-PRO
-
-SET ECHO ON;
-GRANT DBA TO &&eadam_user. IDENTIFIED BY &&eadam_pwd.;
-GRANT ANALYZE ANY TO &&eadam_user.;
-ALTER USER &&eadam_user. DEFAULT TABLESPACE &&default_tablespace.;
-ALTER USER &&eadam_user. QUOTA UNLIMITED ON &&default_tablespace.;
-ALTER USER &&eadam_user. TEMPORARY TABLESPACE &&temporary_tablespace.;
+-- eadam user and pwd
+DEF eadam_user = 'eadam';
+DEF eadam_pwd = 'eadam';
 
 /* ------------------------------------------------------------------------- */
 
@@ -98,6 +31,13 @@ CREATE TABLE dba_hist_xtr_control_s (
   tar_file_name   VARCHAR2(4000),
   directory_path  VARCHAR2(4000)
 );
+
+CREATE UNIQUE INDEX dba_hist_xtr_control_s_pk ON dba_hist_xtr_control_s (eadam_seq_id)
+/
+
+ALTER TABLE dba_hist_xtr_control_s 
+ADD CONSTRAINT dba_hist_xtr_control_s_pk 
+PRIMARY KEY (eadam_seq_id); 
 
 GRANT SELECT ON dba_hist_xtr_control_s TO PUBLIC
 /
@@ -158,7 +98,7 @@ DECLARE
       l_cols := l_cols||CHR(10);
     END LOOP;
     l_cols := l_cols||')';
-    l_sql := 'CREATE TABLE '||TRIM(LOWER(SUBSTR(REPLACE(p_table_name, '$'), 1, 25)))||'_s'||CHR(10)||l_cols||' PARALLEL 4';
+    l_sql := 'CREATE TABLE '||TRIM(LOWER(SUBSTR(REPLACE(p_table_name, '$'), 1, 25)))||'_s'||CHR(10)||l_cols;
     INSERT INTO sql_log VALUES (l_sql);
     BEGIN
       EXECUTE IMMEDIATE l_sql; 
@@ -184,6 +124,8 @@ BEGIN
   create_staging_table('DBA_HIST_SQLTEXT');
   create_staging_table('DBA_HIST_SYS_TIME_MODEL');
   create_staging_table('DBA_HIST_SYSSTAT');
+  create_staging_table('DBA_HIST_TBSPC_SPACE_USAGE');
+  create_staging_table('DBA_TABLESPACES');
   create_staging_table('GV_$ACTIVE_SESSION_HISTORY');
   create_staging_table('GV_$LOG');
   create_staging_table('GV_$SQL_MONITOR');
@@ -193,6 +135,7 @@ BEGIN
   create_staging_table('GV_$SYSTEM_PARAMETER2');
   create_staging_table('V_$CONTROLFILE');
   create_staging_table('V_$DATAFILE');
+  create_staging_table('V_$TABLESPACE');
   create_staging_table('V_$TEMPFILE');
 END;
 /
@@ -208,6 +151,5 @@ SELECT table_name staging_table FROM user_tables WHERE table_name LIKE '%_S' ORD
 
 /* ------------------------------------------------------------------------- */
 
-UNDEF 1 2 3 4
 SET ECHO OFF FEED OFF;
 SPO OFF;

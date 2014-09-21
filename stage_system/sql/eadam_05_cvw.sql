@@ -161,7 +161,7 @@ SELECT c.eadam_seq_id,
            AND h.dbid            = c.dbid
            AND h.instance_number = TO_NUMBER(i1.value)
            AND h.instance_name   = i2.value), host_name
-       ), 1, 16) host_name,
+       ), 1, 64) host_name,
        COALESCE(TO_NUMBER(i3.value), lc.num_cpus, 0) cpu_count,
        SUBSTR(c.platform_name, 1, 101) platform_name,
        SUBSTR(c.version, 1, 17) version,
@@ -1524,8 +1524,8 @@ SELECT eadam_seq_id,
        SUM(rw_iops_avg),
        SUM(r_iops_avg),
        SUM(w_iops_avg),
-       SUM(r_bytes_perc),
-       SUM(w_bytes_perc),
+       ROUND(AVG(r_bytes_perc), 1) r_bytes_perc,
+       ROUND(AVG(w_bytes_perc), 1) w_bytes_perc,
        SUM(rw_mbps_peak),
        SUM(r_mbps_peak),
        SUM(w_mbps_peak),
@@ -1671,6 +1671,118 @@ GRANT SELECT ON disk_perf_series_v TO PUBLIC
 /
 
 CREATE OR REPLACE PUBLIC SYNONYM eadam_disk_perf_series_v FOR disk_perf_series_v
+/
+
+/* ------------------------------------------------------------------------- */
+
+CREATE OR REPLACE VIEW os_series_v AS
+WITH 
+osstat_denorm AS (
+SELECT i.eadam_seq_id,
+       i.dbid,
+       i.instance_number,
+       i.host_name,
+       h.snap_id,
+       SUM(CASE h.stat_name WHEN 'LOAD'                  THEN value ELSE 0 END) load,
+       SUM(CASE h.stat_name WHEN 'NUM_CPUS'              THEN value ELSE 0 END) num_cpus,
+       SUM(CASE h.stat_name WHEN 'NUM_CPU_CORES'         THEN value ELSE 0 END) num_cpu_cores,
+       SUM(CASE h.stat_name WHEN 'PHYSICAL_MEMORY_BYTES' THEN value ELSE 0 END) physical_memory_bytes
+  FROM dba_hist_osstat_s h,
+       database_instance_v i
+ WHERE h.stat_name IN ('LOAD', 'NUM_CPUS', 'NUM_CPU_CORES', 'PHYSICAL_MEMORY_BYTES')
+   AND i.eadam_seq_id = h.eadam_seq_id
+   AND i.instance_number = h.instance_number
+ GROUP BY
+       i.eadam_seq_id,
+       i.dbid,
+       i.instance_number,
+       i.host_name,
+       h.snap_id
+)
+SELECT h.eadam_seq_id,
+       h.instance_number,
+       h.host_name,
+       TRUNC(CAST(s.end_interval_time AS DATE), 'HH') begin_time,
+       TRUNC(CAST(s.end_interval_time AS DATE), 'HH') + (1/24) end_time,
+       ROUND(MAX(load), 2) load,
+       MAX(num_cpus) num_cpus,
+       MAX(num_cpu_cores) num_cpu_cores,
+       ROUND(MAX(physical_memory_bytes) / POWER(2, 30), 3) physical_memory_gb
+  FROM osstat_denorm h,
+       dba_hist_snapshot_s s
+ WHERE s.eadam_seq_id = h.eadam_seq_id
+   AND s.dbid = h.dbid
+   AND s.snap_id = h.snap_id
+   AND s.instance_number = h.instance_number
+ GROUP BY
+       h.eadam_seq_id,
+       h.instance_number,
+       h.host_name,
+       TRUNC(CAST(s.end_interval_time AS DATE), 'HH')
+/
+
+GRANT SELECT ON os_series_v TO PUBLIC
+/
+
+CREATE OR REPLACE PUBLIC SYNONYM eadam_os_series_v FOR os_series_v
+/
+
+/* ------------------------------------------------------------------------- */
+
+-- associated to the instance from where eadam was captured
+CREATE OR REPLACE VIEW disk_space_series_v AS
+WITH
+ts_per_snap_id AS (
+SELECT us.eadam_seq_id,
+       us.dbid,
+       sn.instance_number,
+       us.snap_id,
+       TRUNC(CAST(sn.end_interval_time AS DATE), 'HH') + (1/24) end_time,
+       SUM(us.tablespace_size * ts.block_size) all_tablespaces_bytes,
+       SUM(CASE ts.contents WHEN 'PERMANENT' THEN us.tablespace_size * ts.block_size ELSE 0 END) perm_tablespaces_bytes,
+       SUM(CASE ts.contents WHEN 'UNDO'      THEN us.tablespace_size * ts.block_size ELSE 0 END) undo_tablespaces_bytes,
+       SUM(CASE ts.contents WHEN 'TEMPORARY' THEN us.tablespace_size * ts.block_size ELSE 0 END) temp_tablespaces_bytes
+  FROM dba_hist_tbspc_space_usag_s us,
+       dba_hist_xtr_control_s ct,
+       dba_hist_snapshot_s sn,
+       v_tablespace_s vt,
+       dba_tablespaces_s ts
+ WHERE ct.eadam_seq_id = us.eadam_seq_id
+   AND sn.eadam_seq_id = us.eadam_seq_id
+   AND sn.snap_id = us.snap_id
+   AND sn.dbid = us.dbid
+   AND sn.instance_number = ct.instance_number
+   AND vt.eadam_seq_id = us.eadam_seq_id
+   AND vt.ts# = us.tablespace_id
+   AND ts.eadam_seq_id = vt.eadam_seq_id
+   AND ts.tablespace_name = vt.name
+ GROUP BY
+       us.eadam_seq_id,
+       us.dbid,
+       sn.instance_number,
+       us.snap_id,
+       sn.end_interval_time
+)
+SELECT eadam_seq_id,
+       dbid,
+       instance_number,
+       end_time - (1/24) begin_time,
+       end_time,
+       ROUND(MAX(perm_tablespaces_bytes) / POWER(2, 30), 3) perm_gb,
+       ROUND(MAX(undo_tablespaces_bytes) / POWER(2, 30), 3) undo_gb,
+       ROUND(MAX(temp_tablespaces_bytes) / POWER(2, 30), 3) temp_gb
+  FROM ts_per_snap_id
+ GROUP BY
+       eadam_seq_id,
+       dbid,
+       instance_number,
+       end_time
+/
+
+GRANT SELECT ON disk_space_series_v TO PUBLIC
+/
+
+CREATE OR REPLACE PUBLIC SYNONYM eadam_disk_space_series_v FOR disk_space_series_v
 /
 
 /* ------------------------------------------------------------------------- */
