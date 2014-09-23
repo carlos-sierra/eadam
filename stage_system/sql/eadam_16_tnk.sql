@@ -1,6 +1,5 @@
 -- truncates eadam repository
 
-ALTER SESSION FORCE PARALLEL DDL PARALLEL 4;
 SET SERVEROUT ON;
 
 BEGIN

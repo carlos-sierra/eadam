@@ -1,4 +1,4 @@
--- Creates eAdam user and directory
+-- Creates eAdam user and directory. Use this script on initial installation
 -- parameters: default and temporary tablespaces for eAdam user, the user/pwd for it
 
 SPO eadam_01_cur.txt;

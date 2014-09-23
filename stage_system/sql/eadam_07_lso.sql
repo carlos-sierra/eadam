@@ -7,6 +7,7 @@ PRO eadam_seq_id: "&&eadam_seq_id."
 
 SPO eadam_07_lso_&&eadam_seq_id..txt;
 PRO eadam_seq_id: "&&eadam_seq_id."
+DEF new_eadam_seq_id = "&&eadam_seq_id."
 
 SET ECHO ON FEED ON;
 
@@ -59,14 +60,12 @@ BEGIN
     INSERT INTO sql_log VALUES (l_sql);
     BEGIN
       EXECUTE IMMEDIATE l_sql USING IN :eadam_seq_id;
-      EXECUTE IMMEDIATE 'COMMIT';
     EXCEPTION
       WHEN OTHERS THEN
         l_error := SQLERRM;
         DBMS_OUTPUT.PUT_LINE(l_error||'. Loading Staging Table: '||i.s_table_name);
         INSERT INTO sql_error VALUES (:eadam_seq_id, SYSDATE, i.s_table_name||': '||l_error, l_sql);
     END;
-    DBMS_STATS.GATHER_TABLE_STATS(USER, LOWER(i.s_table_name));
   END LOOP;
 END;
 /
@@ -78,17 +77,40 @@ UPDATE dba_hist_xtr_control_s SET
 WHERE eadam_seq_id = :eadam_seq_id
 /
 
+/* ------------------------------------------------------------------------- */
+
 COMMIT;
+
+/* ------------------------------------------------------------------------- */
+
+-- gets prior set in case this is an automerge
+COL old_eadam_seq_id NEW_V old_eadam_seq_id;
+SELECT TO_CHAR(NVL(MAX(o.eadam_seq_id), -2)) old_eadam_seq_id
+  FROM dba_hist_xtr_control_s n,
+       dba_hist_xtr_control_s o
+ WHERE n.eadam_seq_id = :eadam_seq_id
+   AND o.dbid = n.dbid
+   AND o.dbname = n.dbname
+   AND o.db_unique_name = n.db_unique_name
+   AND o.platform_name = n.platform_name
+   AND o.version <= n.version
+   AND o.capture_time < n.capture_time
+   AND o.eadam_seq_id < n.eadam_seq_id
+/
 
 /* ------------------------------------------------------------------------- */
 
 -- list
 COL seq FOR 999;
-COL dbname_instance_host FOR A50;
+COL source FOR A9;
+COL db_name_id FOR A20;
 COL version FOR A10;
 COL captured FOR A8;
+COL host_nm FOR A30 HEA "HOST_NAME";
 SELECT eadam_seq_id seq,
-       SUBSTR(dbname||':'||db_unique_name||':'||instance_name||':'||host_name, 1, 50) dbname_instance_host,
+       CASE WHEN eadam_seq_id_1 IS NOT NULL THEN eadam_seq_id_1||','||eadam_seq_id_2 END source,
+       dbname||'('||dbid||')' db_name_id,
+       SUBSTR(host_name, 1, 30) host_nm,
        version,
        SUBSTR(capture_time, 1, 8) captured
   FROM dba_hist_xtr_control_s

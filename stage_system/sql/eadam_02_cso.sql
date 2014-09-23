@@ -1,4 +1,4 @@
--- Creates Staging Objects
+-- Creates Staging Objects. Use this script when there are new eAdam schema objects
 -- parameters: default and temporary tablespaces for eAdam user, the user/pwd for it
 
 SPO eadam_02_cso.txt;
@@ -116,6 +116,7 @@ BEGIN
   create_staging_table('DBA_HIST_OSSTAT');
   create_staging_table('DBA_HIST_PARAMETER');
   create_staging_table('DBA_HIST_PGASTAT');
+  create_staging_table('DBA_HIST_SERVICE_STAT');
   create_staging_table('DBA_HIST_SGA');
   create_staging_table('DBA_HIST_SGASTAT');
   create_staging_table('DBA_HIST_SNAPSHOT');
@@ -124,6 +125,7 @@ BEGIN
   create_staging_table('DBA_HIST_SQLTEXT');
   create_staging_table('DBA_HIST_SYS_TIME_MODEL');
   create_staging_table('DBA_HIST_SYSSTAT');
+  create_staging_table('DBA_HIST_SYSTEM_EVENT');
   create_staging_table('DBA_HIST_TBSPC_SPACE_USAGE');
   create_staging_table('DBA_TABLESPACES');
   create_staging_table('GV_$ACTIVE_SESSION_HISTORY');
@@ -135,6 +137,7 @@ BEGIN
   create_staging_table('GV_$SYSTEM_PARAMETER2');
   create_staging_table('V_$CONTROLFILE');
   create_staging_table('V_$DATAFILE');
+  create_staging_table('V_$RMAN_BACKUP_JOB_DETAILS');
   create_staging_table('V_$TABLESPACE');
   create_staging_table('V_$TEMPFILE');
 END;

@@ -50,6 +50,7 @@ HOS gunzip -v dba_hist_event_histogram.txt.gz
 HOS gunzip -v dba_hist_osstat.txt.gz
 HOS gunzip -v dba_hist_parameter.txt.gz
 HOS gunzip -v dba_hist_pgastat.txt.gz
+HOS gunzip -v dba_hist_service_stat.txt.gz
 HOS gunzip -v dba_hist_sga.txt.gz
 HOS gunzip -v dba_hist_sgastat.txt.gz
 HOS gunzip -v dba_hist_snapshot.txt.gz
@@ -58,6 +59,7 @@ HOS gunzip -v dba_hist_sqlstat.txt.gz
 HOS gunzip -v dba_hist_sqltext.txt.gz
 HOS gunzip -v dba_hist_sys_time_model.txt.gz
 HOS gunzip -v dba_hist_sysstat.txt.gz
+HOS gunzip -v dba_hist_system_event.txt.gz
 HOS gunzip -v dba_hist_tbspc_space_usage.txt.gz
 HOS gunzip -v dba_tablespaces.txt.gz
 HOS gunzip -v gv_active_session_history.txt.gz
@@ -69,6 +71,7 @@ HOS gunzip -v gv_sql.txt.gz
 HOS gunzip -v gv_system_parameter2.txt.gz
 HOS gunzip -v v_controlfile.txt.gz
 HOS gunzip -v v_datafile.txt.gz
+HOS gunzip -v v_rman_backup_job_details.txt.gz
 HOS gunzip -v v_tablespace.txt.gz
 HOS gunzip -v v_tempfile.txt.gz
 

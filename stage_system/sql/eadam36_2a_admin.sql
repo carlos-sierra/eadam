@@ -3,6 +3,21 @@ SPO &&main_report_name..html APP;
 PRO <h2>&&section_name.</h2>
 SPO OFF;
 
+DEF title = 'RMAN Backup Job Details';
+DEF main_table = 'V_RMAN_BACKUP_JOB_DETAILS_S';
+BEGIN
+  :sql_text := '
+SELECT /*+ &&top_level_hints. */
+     *
+  FROM v_rman_backup_job_details_s
+ WHERE eadam_seq_id = &&eadam_seq_id.    
+ ORDER BY
+       start_time DESC
+';
+END;
+/
+@@eadam36_9a_pre_one.sql
+
 DEF title = 'REDO LOG';
 DEF main_table = 'GV_LOG_S';
 BEGIN

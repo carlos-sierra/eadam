@@ -2,11 +2,15 @@
 
 -- list
 COL seq FOR 999;
-COL dbname_instance_host FOR A50;
+COL source FOR A9;
+COL db_name_id FOR A20;
 COL version FOR A10;
 COL captured FOR A8;
+COL host_nm FOR A30 HEA "HOST_NAME";
 SELECT eadam_seq_id seq,
-       SUBSTR(dbname||':'||db_unique_name||':'||instance_name||':'||host_name, 1, 50) dbname_instance_host,
+       CASE WHEN eadam_seq_id_1 IS NOT NULL THEN eadam_seq_id_1||','||eadam_seq_id_2 END source,
+       dbname||'('||dbid||')' db_name_id,
+       SUBSTR(host_name, 1, 30) host_nm,
        version,
        SUBSTR(capture_time, 1, 8) captured
   FROM dba_hist_xtr_control_s
@@ -33,7 +37,6 @@ BEGIN
   LOOP
     EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id.' INTO l_count;
     EXECUTE IMMEDIATE 'DELETE '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id.';
-    EXECUTE IMMEDIATE 'COMMIT';
     DBMS_OUTPUT.PUT_LINE(RPAD(i.table_name, 32, '.')||LPAD(l_count, 12)||' rows');
   END LOOP;
 END;
