@@ -17,6 +17,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 *****************************************************************************************/
+
+-- loads a tar file into repository
+
+@@sql/eadam_00_def.sql
 @@sql/eadam_06_cet.sql
 @@sql/eadam_07_lso.sql
 -- report

@@ -5,7 +5,6 @@ SPO eadam_01_cur.txt;
 SET ECHO ON FEED ON VER ON;
 
 -- eadam/stage_system where TAR files are placed
-DEF eadam_directory = 'EADAM_DIR';
 
 CONN / AS SYSDBA;
  
@@ -60,16 +59,6 @@ PRO TEMPORARY_TABLESPACE:
 PRO
 DEF temporary_tablespace = '&2';
 PRO
-PRO Parameter 3:
-PRO EADAM_USER:
-PRO
-DEF eadam_user = '&3';
-PRO
-PRO Parameter 4:
-PRO EADAM_PWD:
-PRO
-DEF eadam_pwd = '&4';
-PRO
 
 SET ECHO ON;
 GRANT DBA TO &&eadam_user. IDENTIFIED BY &&eadam_pwd.;
@@ -84,6 +73,6 @@ GRANT read,write ON DIRECTORY &&eadam_directory. TO &&eadam_user.;
 
 /* ------------------------------------------------------------------------- */
 
-UNDEF 1 2 3 4
+UNDEF 1 2
 SET ECHO OFF FEED OFF;
 SPO OFF;

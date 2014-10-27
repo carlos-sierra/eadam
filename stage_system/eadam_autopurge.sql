@@ -18,7 +18,7 @@
 
 *****************************************************************************************/
 
--- produces eadam report similar to edb360
+-- purges sources of verified merged sets when their merged set is older than retention days
+-- purges sets with failed verification if older than retention
 
-@@sql/eadam36_0b_pre.sql
-@@sql/eadam36_0a_main.sql
+@@sql/eadam_13_prg.sql 7

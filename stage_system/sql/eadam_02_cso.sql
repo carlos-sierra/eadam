@@ -4,10 +4,6 @@
 SPO eadam_02_cso.txt;
 SET ECHO ON FEED ON;
 
--- eadam user and pwd
-DEF eadam_user = 'eadam';
-DEF eadam_pwd = 'eadam';
-
 /* ------------------------------------------------------------------------- */
 
 CONN &&eadam_user./&&eadam_pwd.;
@@ -15,21 +11,22 @@ CONN &&eadam_user./&&eadam_pwd.;
 /* ------------------------------------------------------------------------- */
 
 CREATE TABLE dba_hist_xtr_control_s (
-  eadam_seq_id      NUMBER,
-  eadam_seq_id_1    NUMBER,
-  eadam_seq_id_2    NUMBER,
-  row_num         NUMBER,
-  dbid            NUMBER,
-  dbname          VARCHAR2(4000),
-  db_unique_name  VARCHAR2(4000),
-  platform_name   VARCHAR2(4000),
-  instance_number VARCHAR2(4000),
-  instance_name   VARCHAR2(4000),
-  host_name       VARCHAR2(4000),
-  version         VARCHAR2(4000),
-  capture_time    VARCHAR2(4000),
-  tar_file_name   VARCHAR2(4000),
-  directory_path  VARCHAR2(4000)
+  eadam_seq_id        NUMBER,
+  eadam_seq_id_1      NUMBER,
+  eadam_seq_id_2      NUMBER,
+  verification_passed VARCHAR2(1), /* Y/N */
+  row_num             NUMBER,
+  dbid                NUMBER,
+  dbname              VARCHAR2(4000),
+  db_unique_name      VARCHAR2(4000),
+  platform_name       VARCHAR2(4000),
+  instance_number     VARCHAR2(4000),
+  instance_name       VARCHAR2(4000),
+  host_name           VARCHAR2(4000),
+  version             VARCHAR2(4000),
+  capture_time        VARCHAR2(4000),
+  tar_file_name       VARCHAR2(4000),
+  directory_path      VARCHAR2(4000)
 );
 
 CREATE UNIQUE INDEX dba_hist_xtr_control_s_pk ON dba_hist_xtr_control_s (eadam_seq_id)
@@ -67,6 +64,64 @@ CREATE TABLE sql_log (sql_text CLOB);
 CREATE TABLE sql_error (eadam_seq_id NUMBER, error_time DATE, error_text VARCHAR2(4000), sql_text CLOB);
 
 CREATE SEQUENCE eadam_seq NOCACHE;
+
+/* ------------------------------------------------------------------------- */
+
+-- sysman.gc$metric_values_hourly
+CREATE TABLE gc_metric_values_hourly_s 
+( eadam_seq_id              NUMBER
+, eadam_seq_id_src			NUMBER
+, row_num					NUMBER
+, entity_type               VARCHAR2(64)  
+, entity_name               VARCHAR2(256) 
+, entity_guid               RAW(16)  
+, parent_me_type            VARCHAR2(64)  
+, parent_me_name            VARCHAR2(256) 
+, parent_me_guid            RAW(16)  
+, type_meta_ver             VARCHAR2(8)   
+, metric_group_name         VARCHAR2(64)  
+, metric_column_name        VARCHAR2(64)  
+, column_type               NUMBER(1)     
+, column_index              NUMBER(3)     
+, data_column_type          NUMBER(2)     
+, metric_group_id           NUMBER(38)    
+, metric_group_label        VARCHAR2(64)  
+, metric_group_label_nlsid  VARCHAR2(64)  
+, metric_column_id          NUMBER(38)    
+, metric_column_label       VARCHAR2(64)  
+, metric_column_label_nlsid VARCHAR2(64)  
+, description               VARCHAR2(128) 
+, short_name                VARCHAR2(40)  
+, unit                      VARCHAR2(32)  
+, is_for_summary            NUMBER        
+, is_stateful               NUMBER        
+, non_thresholded_alerts    NUMBER        
+, metric_key_id             NUMBER(38)    
+, key_part_1                VARCHAR2(256) 
+, key_part_2                VARCHAR2(256) 
+, key_part_3                VARCHAR2(256) 
+, key_part_4                VARCHAR2(256) 
+, key_part_5                VARCHAR2(256) 
+, key_part_6                VARCHAR2(256) 
+, key_part_7                VARCHAR2(256) 
+, collection_time           DATE          
+, collection_time_utc       DATE          
+, count_of_collections      NUMBER(38)    
+, avg_value                 NUMBER        
+, min_value                 NUMBER        
+, max_value                 NUMBER        
+, stddev_value              NUMBER      
+);
+
+/* ------------------------------------------------------------------------- */
+
+CREATE TABLE row_counts
+( eadam_seq_id              NUMBER
+, table_name                VARCHAR2(30)
+, external_table_row_count  NUMBER
+, staging_table_row_count   NUMBER
+, verification_passed       VARCHAR2(1) /* Y/N */
+);
 
 /* ------------------------------------------------------------------------- */
 

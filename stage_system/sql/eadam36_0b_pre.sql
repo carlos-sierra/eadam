@@ -8,14 +8,16 @@ COL eadam_seq_id_1 NOPRI;
 COL eadam_seq_id_2 NOPRI;
 
 -- list
-COL seq FOR 999;
-COL source FOR A9;
+COL seq FOR 99999;
+COL source FOR A13;
+COL verification_passed FOR A1;
 COL db_name_id FOR A20;
 COL version FOR A10;
 COL captured FOR A8;
 COL host_nm FOR A30 HEA "HOST_NAME";
 SELECT eadam_seq_id seq,
        CASE WHEN eadam_seq_id_1 IS NOT NULL THEN eadam_seq_id_1||','||eadam_seq_id_2 END source,
+       verification_passed,
        dbname||'('||dbid||')' db_name_id,
        SUBSTR(host_name, 1, 30) host_nm,
        version,
@@ -169,7 +171,7 @@ COL between_dates NEW_V between_dates;
 SELECT ', between &&begin_date. and &&end_date.' between_dates FROM DUAL;
 
 -- setup
-DEF tool_vrsn = 'v1413 (2014-09-23)';
+DEF tool_vrsn = 'v1415 (2014-10-27)';
 DEF prefix = 'eadam36';
 DEF sql_trace_level = '8';
 DEF main_table = '';

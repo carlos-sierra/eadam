@@ -2,15 +2,10 @@ SPO eadam_06_cet.txt;
 PRO This script loads awr data from source into staging system
 
 -- eadam/stage_system where TAR files are placed
-DEF eadam_directory = 'EADAM_DIR';
 COL directory_path NEW_V directory_path;
 SELECT directory_path FROM dba_directories WHERE directory_name = '&&eadam_directory.';
 -- grant read,write on directory to eadam
 -- HOS chmod 777 to this directory
-
--- eadam user and pwd
-DEF eadam_user = 'eadam';
-DEF eadam_pwd = 'eadam';
 
 CONN / AS SYSDBA;
 
@@ -19,7 +14,7 @@ CONN / AS SYSDBA;
 SET TERM ON ECHO OFF;
 PRO
 PRO TAR files in Current Directory:
-HOS ls -lt eadam*.tar
+HOS ls -lt *.tar
 PRO Parameter 1:
 PRO TAR_FILE_NAME:
 DEF tar_file_name = '&1';
@@ -74,6 +69,7 @@ HOS gunzip -v v_datafile.txt.gz
 HOS gunzip -v v_rman_backup_job_details.txt.gz
 HOS gunzip -v v_tablespace.txt.gz
 HOS gunzip -v v_tempfile.txt.gz
+HOS gunzip -v gc_metric_values_hourly.txt.gz
 
 /* ------------------------------------------------------------------------- */
 
@@ -161,7 +157,8 @@ DECLARE
 BEGIN
   FOR i IN (SELECT DISTINCT table_name FROM dba_tab_columns_e ORDER BY table_name)
   LOOP
-    l_table_name := REPLACE(i.table_name, '$');
+    l_table_name := REPLACE(i.table_name, 'GC$', 'GC_');
+    l_table_name := REPLACE(l_table_name, '$');
     l_cols := NULL;
     FOR j IN (SELECT column_name FROM dba_tab_columns_e WHERE table_name = i.table_name ORDER BY column_id)
     LOOP

@@ -1,20 +1,27 @@
+SPO eadam_15_del.txt;
+
 -- deletes an eadam_seq_id
 
+SET TERM ON ECHO OFF;
+
 -- list
-COL seq FOR 999;
-COL source FOR A9;
+COL seq FOR 99999;
+COL source FOR A13;
+COL verification_passed FOR A1;
 COL db_name_id FOR A20;
 COL version FOR A10;
 COL captured FOR A8;
 COL host_nm FOR A30 HEA "HOST_NAME";
 SELECT eadam_seq_id seq,
        CASE WHEN eadam_seq_id_1 IS NOT NULL THEN eadam_seq_id_1||','||eadam_seq_id_2 END source,
+       verification_passed,
        dbname||'('||dbid||')' db_name_id,
        SUBSTR(host_name, 1, 30) host_nm,
        version,
        SUBSTR(capture_time, 1, 8) captured
   FROM dba_hist_xtr_control_s
  ORDER BY 1;
+
 PRO
 PRO Parameter 1:
 PRO EADAM_SEQ_ID:
@@ -33,6 +40,7 @@ BEGIN
                AND table_name NOT LIKE '%!_V_' ESCAPE '!'
                AND column_name = 'EADAM_SEQ_ID'
              ORDER BY
+                   CASE table_name WHEN 'DBA_HIST_XTR_CONTROL_S' THEN 2 ELSE 1 END,
                    table_name)
   LOOP
     EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM '||i.table_name||' WHERE eadam_seq_id = &&eadam_seq_id.' INTO l_count;
@@ -47,3 +55,4 @@ COMMIT;
 UNDEF 1;
 SET SERVEROUT OFF;
 
+SPO OFF;
