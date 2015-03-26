@@ -1,5 +1,12 @@
 SPO eadam_07_lso.txt
 
+DEF date_mask = 'YYYY-MM-DD/HH24:MI:SS';
+DEF timestamp_mask = 'YYYY-MM-DD/HH24:MI:SS.FF6';
+
+ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
+ALTER SESSION SET NLS_DATE_FORMAT = '&&date_mask.';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = '&&timestamp_mask.';
+
 -- Loads Staging Objects
 COL eadam_seq_id NEW_V eadam_seq_id FOR A5;
 SELECT TRIM(TO_CHAR(eadam_seq.NEXTVAL)) eadam_seq_id FROM DUAL;

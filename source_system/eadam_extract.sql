@@ -35,11 +35,25 @@ END;
 
 DEF date_mask = 'YYYY-MM-DD/HH24:MI:SS';
 DEF timestamp_mask = 'YYYY-MM-DD/HH24:MI:SS.FF6';
+DEF timestamp_tz_mask = 'YYYY-MM-DD/HH24:MI:SS.FF6 TZH:TZM';
 DEF fields_delimiter = '<,>';
 
+-- Exadata
+ALTER SESSION SET "_serial_direct_read" = ALWAYS;
+ALTER SESSION SET "_small_table_threshold" = 1001;
+-- nls
 ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ".,";
 ALTER SESSION SET NLS_DATE_FORMAT = '&&date_mask.';
 ALTER SESSION SET NLS_TIMESTAMP_FORMAT = '&&timestamp_mask.';
+ALTER SESSION SET NLS_TIMESTAMP_TZ_FORMAT = '&&timestamp_tz_mask.';
+-- adding to prevent slow access to ASH with non default NLS settings
+ALTER SESSION SET NLS_SORT = 'BINARY';
+ALTER SESSION SET NLS_COMP = 'BINARY';
+-- to work around bug 12672969
+ALTER SESSION SET "_optimizer_order_by_elimination_enabled"=false; 
+-- workaround Siebel
+ALTER SESSION SET optimizer_index_cost_adj = 100;
+ALTER SESSION SET optimizer_dynamic_sampling = 2;
 
 /* ------------------------------------------------------------------------- */
 
