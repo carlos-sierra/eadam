@@ -152,7 +152,7 @@ DECLARE
   l_cols VARCHAR2(32767);
   l_sql VARCHAR2(32767);
   l_error VARCHAR2(4000);
-  l_table_name VARCHAR2(30);
+  l_table_name VARCHAR2(300);
   l_count NUMBER;
 BEGIN
   FOR i IN (SELECT DISTINCT table_name FROM dba_tab_columns_e ORDER BY table_name)
