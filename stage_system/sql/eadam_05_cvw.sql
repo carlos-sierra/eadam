@@ -1145,19 +1145,23 @@ SELECT h.eadam_seq_id,
        h.instance_number,
        h.snap_id,
        TRUNC(CAST(s.end_interval_time AS DATE), 'HH') begin_time,
-       SUM(h.value) bytes
+       --SUM(h.value) bytes
+       h.value bytes
   FROM dba_hist_pgastat_s h,
        dba_hist_snapshot_s s
- WHERE  h.name = 'maximum PGA allocated'
+ --WHERE  h.name = 'maximum PGA allocated'
+ WHERE  h.name = 'total PGA allocated'
    AND s.eadam_seq_id = h.eadam_seq_id
    AND s.dbid = h.dbid
    AND s.instance_number = h.instance_number
    AND s.snap_id = h.snap_id
+ /*
  GROUP BY
        h.eadam_seq_id,
        h.instance_number,
        h.snap_id,
        s.end_interval_time
+ */
 ),
 pga_h AS (
 SELECT eadam_seq_id,
